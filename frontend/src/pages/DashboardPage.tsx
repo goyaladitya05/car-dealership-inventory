@@ -321,6 +321,7 @@ export function DashboardPage() {
                     isAdmin={user?.role === 'admin'}
                     onEdit={setFormVehicle}
                     onDeleted={handleDeleted}
+                    onRestocked={handlePurchased}
                   />
                 ))}
               </div>

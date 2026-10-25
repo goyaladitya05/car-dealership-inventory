@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 import {
   purchaseVehicle,
   removeVehicle,
+  restockVehicle,
   type Vehicle,
 } from '../lib/vehicles-api';
 import { Button } from './ui/Button';
@@ -15,6 +16,7 @@ interface VehicleCardProps {
   isAdmin?: boolean;
   onEdit?: (vehicle: Vehicle) => void;
   onDeleted?: (id: string) => void;
+  onRestocked?: (vehicle: Vehicle) => void;
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -31,10 +33,15 @@ export function VehicleCard({
   isAdmin = false,
   onEdit,
   onDeleted,
+  onRestocked,
 }: VehicleCardProps) {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRestocking, setIsRestocking] = useState(false);
+  const [showRestock, setShowRestock] = useState(false);
+  const [restockQuantity, setRestockQuantity] = useState('1');
+  const [restockError, setRestockError] = useState<string>();
   const [message, setMessage] = useState<{
     kind: 'success' | 'error';
     text: string;
@@ -80,6 +87,37 @@ export function VehicleCard({
       setIsConfirmingDelete(false);
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  async function handleRestock(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const quantity = Number(restockQuantity);
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      setRestockError('Quantity must be a whole number of 1 or more');
+      return;
+    }
+
+    setIsRestocking(true);
+    setRestockError(undefined);
+    setMessage(undefined);
+
+    try {
+      const updatedVehicle = await restockVehicle(vehicle.id, quantity, token);
+      onRestocked?.(updatedVehicle);
+      setShowRestock(false);
+      setRestockQuantity('1');
+      setMessage({ kind: 'success', text: 'Stock updated' });
+      clearTimeout(messageTimer.current);
+      messageTimer.current = setTimeout(() => setMessage(undefined), 2500);
+    } catch (error) {
+      setMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Restock failed',
+      });
+    } finally {
+      setIsRestocking(false);
     }
   }
 
@@ -148,6 +186,54 @@ export function VehicleCard({
               </Button>
             </div>
           </div>
+        ) : showRestock ? (
+          <form
+            className="mt-6 rounded-2xl border border-periwinkle bg-periwinkle/20 p-4"
+            onSubmit={handleRestock}
+            noValidate
+          >
+            <label className="block text-sm font-medium text-ink">
+              Restock quantity for {vehicle.make} {vehicle.model}
+              <input
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                autoFocus
+                value={restockQuantity}
+                aria-invalid={Boolean(restockError)}
+                onChange={(event) => {
+                  setRestockQuantity(event.target.value);
+                  setRestockError(undefined);
+                }}
+                className="mt-2 min-h-10 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none focus:border-night focus:ring-3 focus:ring-periwinkle/45"
+              />
+            </label>
+            {restockError ? (
+              <p className="mt-2 text-xs text-red-700">{restockError}</p>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                className="min-h-9 px-4 text-xs"
+                disabled={isRestocking}
+                onClick={() => {
+                  setShowRestock(false);
+                  setRestockError(undefined);
+                }}
+              >
+                Cancel restock
+              </Button>
+              <Button
+                type="submit"
+                className="min-h-9 px-4 text-xs"
+                disabled={isRestocking}
+              >
+                {isRestocking ? 'Adding...' : 'Add stock'}
+              </Button>
+            </div>
+          </form>
         ) : (
           <div className="mt-6 flex flex-wrap gap-2 border-t border-line/70 pt-5">
             <Button
@@ -164,6 +250,7 @@ export function VehicleCard({
               variant="secondary"
               className="min-h-9 px-4 text-xs"
               aria-label={`Restock ${vehicle.make} ${vehicle.model}`}
+              onClick={() => setShowRestock(true)}
             >
               Restock
             </Button>
