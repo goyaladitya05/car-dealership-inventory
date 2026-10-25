@@ -141,4 +141,107 @@ describe('DashboardPage', () => {
     expect(await screen.findByText('Tata Nexon')).toBeVisible();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it('hides inventory management controls from non-admin users', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse(vehicles));
+
+    renderDashboard();
+    await screen.findByText('Tata Nexon');
+
+    expect(
+      screen.queryByRole('button', { name: 'Add vehicle' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Edit/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Restock/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Delete/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows inventory management controls to admins', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      token: 'signed-token',
+      user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse(vehicles));
+
+    renderDashboard();
+    await screen.findByText('Tata Nexon');
+
+    expect(screen.getByRole('button', { name: 'Add vehicle' })).toBeVisible();
+    expect(screen.getAllByRole('button', { name: /Edit/ })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: /Restock/ })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: /Delete/ })).toHaveLength(3);
+  });
+
+  it('adds a created vehicle to the grid without reloading inventory', async () => {
+    const createdVehicle: Vehicle = {
+      ...vehicles[0],
+      id: 'vehicle-4',
+      make: 'Toyota',
+      model: 'Camry',
+      category: 'Sedan',
+      price: 32000,
+      quantity: 4,
+    };
+    vi.mocked(useAuth).mockReturnValue({
+      token: 'signed-token',
+      user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse(vehicles))
+      .mockResolvedValueOnce(jsonResponse(createdVehicle, 201));
+    renderDashboard();
+    await screen.findByText('Tata Nexon');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add vehicle' }));
+    await userEvent.type(screen.getByLabelText('Make'), 'Toyota');
+    await userEvent.type(screen.getByLabelText('Model'), 'Camry');
+    await userEvent.type(screen.getByLabelText('Category'), 'Sedan');
+    await userEvent.type(screen.getByLabelText('Price'), '32000');
+    await userEvent.type(screen.getByLabelText('Quantity'), '4');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Add vehicle' }),
+    );
+
+    expect(await screen.findByText('Toyota Camry')).toBeVisible();
+    expect(screen.getByText('4 models shown')).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('updates an edited vehicle in the grid', async () => {
+    const updatedVehicle = { ...vehicles[0], model: 'Curvv' };
+    vi.mocked(useAuth).mockReturnValue({
+      token: 'signed-token',
+      user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse(vehicles))
+      .mockResolvedValueOnce(jsonResponse(updatedVehicle));
+    renderDashboard();
+    await screen.findByText('Tata Nexon');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Edit Tata Nexon' }),
+    );
+    const modelInput = screen.getByLabelText('Model');
+    await userEvent.clear(modelInput);
+    await userEvent.type(modelInput, 'Curvv');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(await screen.findByText('Tata Curvv')).toBeVisible();
+    expect(screen.queryByText('Tata Nexon')).not.toBeInTheDocument();
+  });
 });
