@@ -40,7 +40,19 @@ describe('VehicleCard', () => {
     expect(screen.getByRole('heading', { name: 'Tata Nexon' })).toBeVisible();
     expect(screen.getByText('$32,999.50')).toBeVisible();
     expect(screen.getByText('Out of stock')).toBeVisible();
+    expect(screen.getByText('Unavailable')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Sold out' })).toBeDisabled();
+  });
+
+  it.each([
+    [2, 'Low stock'],
+    [4, 'Ready to purchase'],
+  ])('shows the correct footer status for %i units', (quantity, status) => {
+    render(
+      <VehicleCardHarness initialVehicle={{ ...vehicle, quantity }} />,
+    );
+
+    expect(screen.getByText(status)).toBeVisible();
   });
 
   it('purchases one vehicle and updates its quantity in place', async () => {
