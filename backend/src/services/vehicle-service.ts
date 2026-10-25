@@ -10,4 +10,8 @@ export class VehicleService {
   create(input: CreateVehicleInput): Promise<Vehicle> {
     return this.vehicles.create(input);
   }
+
+  list(): Promise<Vehicle[]> {
+    return this.vehicles.findAll();
+  }
 }

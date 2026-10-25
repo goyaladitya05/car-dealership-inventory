@@ -24,4 +24,12 @@ export class VehicleController {
       next(error);
     }
   };
+
+  list: RequestHandler = async (_request, response, next) => {
+    try {
+      response.json(await this.vehicleService.list());
+    } catch (error) {
+      next(error);
+    }
+  };
 }

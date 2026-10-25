@@ -7,6 +7,7 @@ export function createVehicleRouter(controller: VehicleController) {
   const router = Router();
 
   router.use(authenticate);
+  router.get('/', controller.list);
   router.post('/', requireRole('admin'), controller.create);
 
   return router;

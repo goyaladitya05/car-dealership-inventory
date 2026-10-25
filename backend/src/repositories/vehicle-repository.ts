@@ -1,3 +1,5 @@
+import { desc } from 'drizzle-orm';
+
 import type { Database } from '../db/index.js';
 import { vehicles } from '../db/schema.js';
 
@@ -40,5 +42,14 @@ export class VehicleRepository {
     }
 
     return toVehicle(vehicle);
+  }
+
+  async findAll(): Promise<Vehicle[]> {
+    const rows = await this.db
+      .select()
+      .from(vehicles)
+      .orderBy(desc(vehicles.createdAt));
+
+    return rows.map(toVehicle);
   }
 }
