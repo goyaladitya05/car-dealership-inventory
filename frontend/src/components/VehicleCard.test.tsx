@@ -48,9 +48,7 @@ describe('VehicleCard', () => {
     [2, 'Low stock'],
     [4, 'Ready to purchase'],
   ])('shows the correct footer status for %i units', (quantity, status) => {
-    render(
-      <VehicleCardHarness initialVehicle={{ ...vehicle, quantity }} />,
-    );
+    render(<VehicleCardHarness initialVehicle={{ ...vehicle, quantity }} />);
 
     expect(screen.getByText(status)).toBeVisible();
   });
