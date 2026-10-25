@@ -29,4 +29,31 @@ export class UserRepository {
 
     return user;
   }
+
+  async createAdmin(email: string, passwordHash: string): Promise<User> {
+    const [user] = await this.db
+      .insert(users)
+      .values({ email, passwordHash, role: 'admin' })
+      .returning();
+
+    if (!user) {
+      throw new Error('Failed to create admin');
+    }
+
+    return user;
+  }
+
+  async promoteToAdmin(id: string, passwordHash: string): Promise<User> {
+    const [user] = await this.db
+      .update(users)
+      .set({ role: 'admin', passwordHash })
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!user) {
+      throw new Error('Failed to promote admin');
+    }
+
+    return user;
+  }
 }
