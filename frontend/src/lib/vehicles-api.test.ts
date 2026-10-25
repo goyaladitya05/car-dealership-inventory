@@ -17,6 +17,7 @@ const vehicle = {
   category: 'SUV',
   price: 1499000,
   quantity: 3,
+  imageUrl: 'https://images.example.com/tata-nexon.jpg',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -104,6 +105,7 @@ describe('vehicles API', () => {
       category: 'SUV',
       price: 1499000,
       quantity: 3,
+      imageUrl: 'https://images.example.com/tata-nexon.jpg',
     };
 
     await expect(createVehicle(input, 'signed-token')).resolves.toEqual(
