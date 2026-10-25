@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ApiError, apiRequest } from './api-client';
+import { apiRequest } from './api-client';
 
 describe('apiRequest', () => {
   afterEach(() => {
@@ -60,7 +60,7 @@ describe('apiRequest', () => {
       body: { email: 'invalid', password: 'password123' },
     });
 
-    await expect(request).rejects.toMatchObject<ApiError>({
+    await expect(request).rejects.toMatchObject({
       message: 'Validation failed',
       status: 400,
       details,
