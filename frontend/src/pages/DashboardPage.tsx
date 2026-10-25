@@ -55,12 +55,14 @@ function LoadingInventory() {
       {[0, 1, 2].map((item) => (
         <div
           key={item}
-          className="min-h-72 rounded-[1.75rem] border border-white/80 bg-white/65 p-6 shadow-soft"
+          className="min-h-96 overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/65 shadow-soft"
         >
-          <div className="h-6 w-20 rounded-full bg-periwinkle/45" />
-          <div className="mt-10 h-4 w-24 rounded bg-line/70" />
-          <div className="mt-4 h-10 w-3/4 rounded bg-line/70" />
-          <div className="mt-5 h-6 w-32 rounded bg-line/60" />
+          <div className="aspect-[16/10] bg-line/50" />
+          <div className="p-6">
+            <div className="h-4 w-24 rounded bg-line/70" />
+            <div className="mt-4 h-10 w-3/4 rounded bg-line/70" />
+            <div className="mt-5 h-6 w-32 rounded bg-line/60" />
+          </div>
         </div>
       ))}
     </div>
