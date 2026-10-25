@@ -5,6 +5,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  text,
   timestamp,
   uuid,
   varchar,
@@ -31,6 +32,7 @@ export const vehicles = pgTable(
     category: varchar({ length: 100 }).notNull(),
     price: numeric({ precision: 12, scale: 2 }).notNull(),
     quantity: integer().notNull(),
+    imageUrl: text('image_url'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
