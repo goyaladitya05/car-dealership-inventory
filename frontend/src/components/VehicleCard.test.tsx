@@ -38,7 +38,7 @@ describe('VehicleCard', () => {
     render(<VehicleCardHarness initialVehicle={{ ...vehicle, quantity: 0 }} />);
 
     expect(screen.getByRole('heading', { name: 'Tata Nexon' })).toBeVisible();
-    expect(screen.getByText('$32,999.50')).toBeVisible();
+    expect(screen.getByText('$33,000')).toBeVisible();
     expect(screen.getByText('Out of stock')).toBeVisible();
     expect(screen.getByText('Unavailable')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Sold out' })).toBeDisabled();

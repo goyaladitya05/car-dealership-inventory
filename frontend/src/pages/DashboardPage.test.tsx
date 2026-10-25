@@ -88,7 +88,7 @@ describe('DashboardPage', () => {
     expect(screen.getByTestId('vehicles-in-stock')).toHaveTextContent('2');
     expect(screen.getByTestId('total-units')).toHaveTextContent('3');
     expect(screen.getByTestId('inventory-value')).toHaveTextContent(
-      '$80,000.00',
+      /^\$80,000$/,
     );
   });
 
