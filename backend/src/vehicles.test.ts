@@ -247,3 +247,69 @@ describe('GET /api/vehicles/search', () => {
     expect(response.body).toEqual({ error: 'Unauthorized' });
   });
 });
+
+describe('GET /api/vehicles/:id', () => {
+  let connection: DatabaseConnection;
+  let vehicleId: string;
+
+  beforeAll(async () => {
+    connection = await createTestDb();
+    const [vehicle] = await connection.db
+      .insert(vehicles)
+      .values({
+        make: 'Mazda',
+        model: 'MX-5',
+        category: 'Convertible',
+        price: '32000.00',
+        quantity: 3,
+      })
+      .returning();
+    vehicleId = vehicle!.id;
+  });
+
+  afterAll(async () => {
+    await connection.close();
+  });
+
+  it('returns a vehicle by id', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .get(`/api/vehicles/${vehicleId}`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: vehicleId,
+      make: 'Mazda',
+      model: 'MX-5',
+      price: 32000,
+    });
+    expect(typeof response.body.price).toBe('number');
+  });
+
+  it('returns 404 when the vehicle does not exist', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .get('/api/vehicles/00000000-0000-4000-8000-000000000000')
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: 'Vehicle not found' });
+  });
+
+  it('returns 400 for an invalid vehicle id', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .get('/api/vehicles/not-a-uuid')
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Validation failed');
+  });
+
+  it('requires authentication', async () => {
+    const response = await request(createApp({ db: connection.db, config })).get(
+      `/api/vehicles/${vehicleId}`,
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'Unauthorized' });
+  });
+});
