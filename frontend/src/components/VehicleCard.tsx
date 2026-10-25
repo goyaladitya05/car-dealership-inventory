@@ -8,6 +8,8 @@ interface VehicleCardProps {
   vehicle: Vehicle;
   token: string;
   onPurchased: (vehicle: Vehicle) => void;
+  isAdmin?: boolean;
+  onEdit?: (vehicle: Vehicle) => void;
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -17,7 +19,13 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 0,
 });
 
-export function VehicleCard({ vehicle, token, onPurchased }: VehicleCardProps) {
+export function VehicleCard({
+  vehicle,
+  token,
+  onPurchased,
+  isAdmin = false,
+  onEdit,
+}: VehicleCardProps) {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [message, setMessage] = useState<{
     kind: 'success' | 'error';
@@ -84,6 +92,36 @@ export function VehicleCard({ vehicle, token, onPurchased }: VehicleCardProps) {
           {currencyFormatter.format(vehicle.price)}
         </p>
       </div>
+
+      {isAdmin ? (
+        <div className="mt-6 flex flex-wrap gap-2 border-t border-line/70 pt-5">
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-9 px-4 text-xs"
+            aria-label={`Edit ${vehicle.make} ${vehicle.model}`}
+            onClick={() => onEdit?.(vehicle)}
+          >
+            Edit
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-9 px-4 text-xs"
+            aria-label={`Restock ${vehicle.make} ${vehicle.model}`}
+          >
+            Restock
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-9 px-4 text-xs text-red-700"
+            aria-label={`Delete ${vehicle.make} ${vehicle.model}`}
+          >
+            Delete
+          </Button>
+        </div>
+      ) : null}
 
       <div className="mt-7 flex min-h-12 items-center justify-between gap-3 border-t border-line/70 pt-5">
         <div className="min-w-0 text-xs">

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -181,7 +181,7 @@ describe('DashboardPage', () => {
 
   it('adds a created vehicle to the grid without reloading inventory', async () => {
     const createdVehicle: Vehicle = {
-      ...vehicles[0],
+      ...vehicles[0]!,
       id: 'vehicle-4',
       make: 'Toyota',
       model: 'Camry',
@@ -204,11 +204,12 @@ describe('DashboardPage', () => {
     await screen.findByText('Tata Nexon');
 
     await userEvent.click(screen.getByRole('button', { name: 'Add vehicle' }));
-    await userEvent.type(screen.getByLabelText('Make'), 'Toyota');
-    await userEvent.type(screen.getByLabelText('Model'), 'Camry');
-    await userEvent.type(screen.getByLabelText('Category'), 'Sedan');
-    await userEvent.type(screen.getByLabelText('Price'), '32000');
-    await userEvent.type(screen.getByLabelText('Quantity'), '4');
+    const dialog = within(screen.getByRole('dialog'));
+    await userEvent.type(dialog.getByLabelText('Make'), 'Toyota');
+    await userEvent.type(dialog.getByLabelText('Model'), 'Camry');
+    await userEvent.type(dialog.getByLabelText('Category'), 'Sedan');
+    await userEvent.type(dialog.getByLabelText('Price'), '32000');
+    await userEvent.type(dialog.getByLabelText('Quantity'), '4');
     await userEvent.click(
       screen.getByRole('button', { name: 'Add vehicle' }),
     );
@@ -236,7 +237,9 @@ describe('DashboardPage', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Edit Tata Nexon' }),
     );
-    const modelInput = screen.getByLabelText('Model');
+    const modelInput = within(screen.getByRole('dialog')).getByLabelText(
+      'Model',
+    );
     await userEvent.clear(modelInput);
     await userEvent.type(modelInput, 'Curvv');
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
