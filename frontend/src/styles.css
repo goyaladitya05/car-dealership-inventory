@@ -39,3 +39,45 @@
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+@layer components {
+  .auth-glow {
+    position: absolute;
+    inset: -10rem -20% auto;
+    height: 38rem;
+    background:
+      radial-gradient(
+        ellipse at 50% 0%,
+        rgb(255 130 50 / 88%) 0%,
+        rgb(255 171 112 / 58%) 24%,
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse at 50% 36%,
+        rgb(175 192 255 / 72%) 0%,
+        rgb(219 226 255 / 48%) 40%,
+        transparent 70%
+      );
+    filter: blur(28px);
+    pointer-events: none;
+  }
+
+  .dashboard-glow {
+    position: absolute;
+    inset: -18rem -25% auto;
+    height: 45rem;
+    background:
+      radial-gradient(
+        ellipse at 55% 5%,
+        rgb(255 139 70 / 70%) 0%,
+        transparent 48%
+      ),
+      radial-gradient(
+        ellipse at 42% 45%,
+        rgb(181 197 255 / 68%) 0%,
+        transparent 68%
+      );
+    filter: blur(36px);
+    pointer-events: none;
+  }
+}
