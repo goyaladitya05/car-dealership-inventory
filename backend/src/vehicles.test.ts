@@ -167,3 +167,83 @@ describe('GET /api/vehicles', () => {
     expect(response.body).toEqual({ error: 'Unauthorized' });
   });
 });
+
+describe('GET /api/vehicles/search', () => {
+  let connection: DatabaseConnection;
+
+  beforeAll(async () => {
+    connection = await createTestDb();
+    await connection.db.insert(vehicles).values([
+      {
+        make: 'Toyota',
+        model: 'Camry',
+        category: 'Sedan',
+        price: '20000.00',
+        quantity: 1,
+      },
+      {
+        make: 'toyota',
+        model: 'Corolla',
+        category: 'sedan',
+        price: '30000.00',
+        quantity: 1,
+      },
+      {
+        make: 'Ford',
+        model: 'Model T',
+        category: 'Classic',
+        price: '15000.00',
+        quantity: 1,
+      },
+    ]);
+  });
+
+  afterAll(async () => {
+    await connection.close();
+  });
+
+  it.each([
+    ['make=YOT', ['Toyota', 'toyota']],
+    ['model=AM', ['Toyota']],
+    ['category=SEDAN', ['Toyota', 'toyota']],
+    ['category=dan', []],
+    ['minPrice=20000&maxPrice=30000', ['Toyota', 'toyota']],
+    [
+      'make=toy&category=sedan&minPrice=25000&maxPrice=30000',
+      ['toyota'],
+    ],
+  ])('filters vehicles with %s', async (query, expectedMakes) => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .get(`/api/vehicles/search?${query}`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.map((vehicle: { make: string }) => vehicle.make).sort(),
+    ).toEqual([...expectedMakes].sort());
+    for (const vehicle of response.body) {
+      expect(typeof vehicle.price).toBe('number');
+    }
+  });
+
+  it.each(['minPrice=invalid', 'maxPrice=invalid', 'minPrice=20&maxPrice=10'])(
+    'rejects invalid search query %s',
+    async (query) => {
+      const response = await request(createApp({ db: connection.db, config }))
+        .get(`/api/vehicles/search?${query}`)
+        .set('Authorization', `Bearer ${tokenFor('user')}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Validation failed');
+    },
+  );
+
+  it('requires authentication', async () => {
+    const response = await request(createApp({ db: connection.db, config })).get(
+      '/api/vehicles/search?make=Toyota',
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'Unauthorized' });
+  });
+});
