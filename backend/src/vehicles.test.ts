@@ -313,3 +313,125 @@ describe('GET /api/vehicles/:id', () => {
     expect(response.body).toEqual({ error: 'Unauthorized' });
   });
 });
+
+describe('PUT /api/vehicles/:id', () => {
+  let connection: DatabaseConnection;
+  let vehicleId: string;
+
+  beforeAll(async () => {
+    connection = await createTestDb();
+    const [vehicle] = await connection.db
+      .insert(vehicles)
+      .values({
+        make: 'Subaru',
+        model: 'Outback',
+        category: 'Wagon',
+        price: '35000.00',
+        quantity: 4,
+        updatedAt: new Date('2020-01-01T00:00:00.000Z'),
+      })
+      .returning();
+    vehicleId = vehicle!.id;
+  });
+
+  afterAll(async () => {
+    await connection.close();
+  });
+
+  it('partially updates a vehicle and preserves omitted fields', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .put(`/api/vehicles/${vehicleId}`)
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({ make: 'SUBARU' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: vehicleId,
+      make: 'SUBARU',
+      model: 'Outback',
+      category: 'Wagon',
+      price: 35000,
+      quantity: 4,
+    });
+    expect(new Date(response.body.updatedAt).getTime()).toBeGreaterThan(
+      new Date('2020-01-01T00:00:00.000Z').getTime(),
+    );
+  });
+
+  it('updates model, category, price, and quantity', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .put(`/api/vehicles/${vehicleId}`)
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({
+        model: 'Forester',
+        category: 'SUV',
+        price: 41000.25,
+        quantity: 7,
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      model: 'Forester',
+      category: 'SUV',
+      price: 41000.25,
+      quantity: 7,
+    });
+    expect(typeof response.body.price).toBe('number');
+  });
+
+  it.each([
+    [{ price: 0 }, 'price'],
+    [{ quantity: -1 }, 'quantity'],
+    [{ quantity: 1.5 }, 'quantity'],
+    [{ make: '' }, 'make'],
+  ])('rejects an invalid update', async (body, field) => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .put(`/api/vehicles/${vehicleId}`)
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send(body);
+
+    expect(response.status).toBe(400);
+    expect(response.body.details).toEqual(
+      expect.arrayContaining([expect.objectContaining({ path: [field] })]),
+    );
+  });
+
+  it('returns 404 when the vehicle does not exist', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .put('/api/vehicles/00000000-0000-4000-8000-000000000000')
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({ quantity: 1 });
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: 'Vehicle not found' });
+  });
+
+  it('returns 400 for an invalid vehicle id', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .put('/api/vehicles/not-a-uuid')
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({ quantity: 1 });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Validation failed');
+  });
+
+  it('requires authentication', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .put(`/api/vehicles/${vehicleId}`)
+      .send({ quantity: 1 });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'Unauthorized' });
+  });
+
+  it('requires the admin role', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .put(`/api/vehicles/${vehicleId}`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`)
+      .send({ quantity: 1 });
+
+    expect(response.status).toBe(403);
+    expect(response.body).toEqual({ error: 'Forbidden' });
+  });
+});
