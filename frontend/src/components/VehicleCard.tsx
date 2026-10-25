@@ -277,34 +277,31 @@ export function VehicleCard({
               </div>
             </form>
           ) : (
-            <div className="mt-6 flex flex-wrap gap-2 border-t border-line/70 pt-5">
-              <Button
+            <div className="mt-5 flex items-center gap-1 border-t border-line/70 pt-3">
+              <button
                 type="button"
-                variant="secondary"
-                className="min-h-9 px-4 text-xs"
+                className="min-h-9 rounded-lg px-3 text-xs font-medium text-muted transition hover:bg-periwinkle/30 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 aria-label={`Edit ${vehicle.make} ${vehicle.model}`}
                 onClick={() => onEdit?.(vehicle)}
               >
                 Edit
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                variant="secondary"
-                className="min-h-9 px-4 text-xs"
+                className="min-h-9 rounded-lg px-3 text-xs font-medium text-muted transition hover:bg-periwinkle/30 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 aria-label={`Restock ${vehicle.make} ${vehicle.model}`}
                 onClick={() => setShowRestock(true)}
               >
                 Restock
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                variant="secondary"
-                className="min-h-9 px-4 text-xs text-red-700"
+                className="min-h-9 rounded-lg px-3 text-xs font-medium text-red-700 transition hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
                 aria-label={`Delete ${vehicle.make} ${vehicle.model}`}
                 onClick={() => setIsConfirmingDelete(true)}
               >
                 Delete
-              </Button>
+              </button>
             </div>
           )
         ) : null}

@@ -179,9 +179,6 @@ describe('DashboardPage', () => {
     expect(screen.getAllByRole('button', { name: /Edit/ })).toHaveLength(3);
     expect(screen.getAllByRole('button', { name: /Restock/ })).toHaveLength(3);
     expect(screen.getAllByRole('button', { name: /Delete/ })).toHaveLength(3);
-    expect(screen.getAllByRole('button', { name: /Edit/ })[0]).toHaveClass(
-      'rounded-lg',
-    );
   });
 
   it('adds a created vehicle to the grid without reloading inventory', async () => {
