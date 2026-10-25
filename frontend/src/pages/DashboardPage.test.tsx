@@ -288,4 +288,50 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Honda City')).toBeVisible();
     expect(screen.getByText('2 models shown')).toBeVisible();
   });
+
+  it('validates restock quantity and updates stock in place', async () => {
+    const restockedVehicle = { ...vehicles[0]!, quantity: 4 };
+    vi.mocked(useAuth).mockReturnValue({
+      token: 'signed-token',
+      user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse(vehicles))
+      .mockResolvedValueOnce(jsonResponse(restockedVehicle));
+    renderDashboard();
+    await screen.findByText('Tata Nexon');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Restock Tata Nexon' }),
+    );
+    const quantityInput = screen.getByLabelText(
+      'Restock quantity for Tata Nexon',
+    );
+    await userEvent.clear(quantityInput);
+    await userEvent.type(quantityInput, '0');
+    await userEvent.click(screen.getByRole('button', { name: 'Add stock' }));
+
+    expect(
+      screen.getByText('Quantity must be a whole number of 1 or more'),
+    ).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledOnce();
+
+    await userEvent.clear(quantityInput);
+    await userEvent.type(quantityInput, '2');
+    await userEvent.click(screen.getByRole('button', { name: 'Add stock' }));
+
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      '/api/vehicles/vehicle-1/restock',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ quantity: 2 }),
+      }),
+    );
+    expect(await screen.findByText('4 units available')).toBeVisible();
+    expect(screen.getByTestId('total-units')).toHaveTextContent('5');
+  });
 });
