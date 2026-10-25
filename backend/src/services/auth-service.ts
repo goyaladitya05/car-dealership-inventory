@@ -27,6 +27,16 @@ export class AuthService {
     return this.createAuthResult(user);
   }
 
+  async login(email: string, password: string): Promise<AuthResult> {
+    const user = await this.users.findByEmail(email);
+
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      throw new AppError(401, 'Invalid email or password');
+    }
+
+    return this.createAuthResult(user);
+  }
+
   private createAuthResult(user: User): AuthResult {
     const token = jwt.sign(
       { role: user.role },

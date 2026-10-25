@@ -24,4 +24,18 @@ export class AuthController {
       next(error);
     }
   };
+
+  login: RequestHandler = async (request, response, next) => {
+    try {
+      const credentials = credentialsSchema.parse(request.body);
+      const result = await this.authService.login(
+        credentials.email,
+        credentials.password,
+      );
+
+      response.json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
