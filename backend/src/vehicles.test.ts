@@ -506,3 +506,143 @@ describe('DELETE /api/vehicles/:id', () => {
     expect(response.body).toEqual({ error: 'Forbidden' });
   });
 });
+
+describe('POST /api/vehicles/:id/purchase', () => {
+  let connection: DatabaseConnection;
+
+  beforeAll(async () => {
+    connection = await createTestDb();
+  });
+
+  afterAll(async () => {
+    await connection.close();
+  });
+
+  async function createVehicle(quantity: number) {
+    const [vehicle] = await connection.db
+      .insert(vehicles)
+      .values({
+        make: 'Hyundai',
+        model: 'Ioniq 5',
+        category: 'SUV',
+        price: '45000.00',
+        quantity,
+      })
+      .returning();
+
+    return vehicle!;
+  }
+
+  it('purchases one vehicle by default as an authenticated user', async () => {
+    const vehicle = await createVehicle(3);
+
+    const response = await request(createApp({ db: connection.db, config }))
+      .post(`/api/vehicles/${vehicle.id}/purchase`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`)
+      .send({});
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: vehicle.id,
+      quantity: 2,
+      price: 45000,
+    });
+  });
+
+  it('purchases the requested quantity', async () => {
+    const vehicle = await createVehicle(5);
+
+    const response = await request(createApp({ db: connection.db, config }))
+      .post(`/api/vehicles/${vehicle.id}/purchase`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`)
+      .send({ quantity: 3 });
+
+    expect(response.status).toBe(200);
+    expect(response.body.quantity).toBe(2);
+  });
+
+  it('returns 409 without changing stock when quantity is insufficient', async () => {
+    const vehicle = await createVehicle(1);
+    const app = createApp({ db: connection.db, config });
+
+    const response = await request(app)
+      .post(`/api/vehicles/${vehicle.id}/purchase`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`)
+      .send({ quantity: 2 });
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({ error: 'Insufficient stock' });
+
+    const getResponse = await request(app)
+      .get(`/api/vehicles/${vehicle.id}`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+    expect(getResponse.body.quantity).toBe(1);
+  });
+
+  it('returns 404 when the vehicle does not exist', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .post(
+        '/api/vehicles/00000000-0000-4000-8000-000000000000/purchase',
+      )
+      .set('Authorization', `Bearer ${tokenFor('user')}`)
+      .send({});
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: 'Vehicle not found' });
+  });
+
+  it.each([{ quantity: 0 }, { quantity: -1 }, { quantity: 1.5 }])(
+    'rejects invalid purchase quantity $quantity',
+    async (body) => {
+      const vehicle = await createVehicle(3);
+      const response = await request(createApp({ db: connection.db, config }))
+        .post(`/api/vehicles/${vehicle.id}/purchase`)
+        .set('Authorization', `Bearer ${tokenFor('user')}`)
+        .send(body);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Validation failed');
+    },
+  );
+
+  it('returns 400 for an invalid vehicle id', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .post('/api/vehicles/not-a-uuid/purchase')
+      .set('Authorization', `Bearer ${tokenFor('user')}`)
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Validation failed');
+  });
+
+  it('requires authentication', async () => {
+    const vehicle = await createVehicle(1);
+    const response = await request(
+      createApp({ db: connection.db, config }),
+    )
+      .post(`/api/vehicles/${vehicle.id}/purchase`)
+      .send({});
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'Unauthorized' });
+  });
+
+  it('does not oversell concurrent purchases', async () => {
+    const vehicle = await createVehicle(1);
+    const app = createApp({ db: connection.db, config });
+    const purchase = () =>
+      request(app)
+        .post(`/api/vehicles/${vehicle.id}/purchase`)
+        .set('Authorization', `Bearer ${tokenFor('user')}`)
+        .send({});
+
+    const responses = await Promise.all([purchase(), purchase()]);
+
+    expect(responses.map(({ status }) => status).sort()).toEqual([200, 409]);
+
+    const getResponse = await request(app)
+      .get(`/api/vehicles/${vehicle.id}`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+    expect(getResponse.body.quantity).toBe(0);
+  });
+});
