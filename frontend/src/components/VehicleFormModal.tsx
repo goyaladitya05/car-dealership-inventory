@@ -75,21 +75,17 @@ function toInput(values: FormValues): VehicleInput {
 }
 
 function changedFields(input: VehicleInput, vehicle: Vehicle): VehicleUpdate {
-  const changes: VehicleUpdate = {};
-
-  for (const field of [
-    'make',
-    'model',
-    'category',
-    'price',
-    'quantity',
-  ] as const) {
-    if (input[field] !== vehicle[field]) {
-      changes[field] = input[field] as never;
-    }
-  }
-
-  return changes;
+  return {
+    ...(input.make === vehicle.make ? {} : { make: input.make }),
+    ...(input.model === vehicle.model ? {} : { model: input.model }),
+    ...(input.category === vehicle.category
+      ? {}
+      : { category: input.category }),
+    ...(input.price === vehicle.price ? {} : { price: input.price }),
+    ...(input.quantity === vehicle.quantity
+      ? {}
+      : { quantity: input.quantity }),
+  };
 }
 
 export function VehicleFormModal({
