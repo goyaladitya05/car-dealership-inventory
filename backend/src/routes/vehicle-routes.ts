@@ -11,6 +11,7 @@ export function createVehicleRouter(controller: VehicleController) {
   router.get('/search', controller.search);
   router.get('/:id', controller.getById);
   router.post('/', requireRole('admin'), controller.create);
+  router.put('/:id', requireRole('admin'), controller.update);
 
   return router;
 }

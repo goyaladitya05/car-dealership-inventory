@@ -3,6 +3,7 @@ import type {
   Vehicle,
   VehicleRepository,
   VehicleSearch,
+  UpdateVehicleInput,
 } from '../repositories/vehicle-repository.js';
 import { AppError } from '../errors/app-error.js';
 
@@ -23,6 +24,16 @@ export class VehicleService {
 
   async getById(id: string): Promise<Vehicle> {
     const vehicle = await this.vehicles.findById(id);
+
+    if (!vehicle) {
+      throw new AppError(404, 'Vehicle not found');
+    }
+
+    return vehicle;
+  }
+
+  async update(id: string, input: UpdateVehicleInput): Promise<Vehicle> {
+    const vehicle = await this.vehicles.update(id, input);
 
     if (!vehicle) {
       throw new AppError(404, 'Vehicle not found');

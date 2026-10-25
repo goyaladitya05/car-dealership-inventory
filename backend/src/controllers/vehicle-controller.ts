@@ -10,6 +10,9 @@ const createVehicleSchema = z.object({
   price: z.number().positive(),
   quantity: z.number().int().nonnegative().default(0),
 });
+const updateVehicleSchema = createVehicleSchema.partial().extend({
+  quantity: z.number().int().nonnegative().optional(),
+});
 
 const optionalPrice = z.preprocess(
   (value) => (value === '' ? Number.NaN : value),
@@ -66,6 +69,16 @@ export class VehicleController {
     try {
       const id = vehicleIdSchema.parse(request.params.id);
       response.json(await this.vehicleService.getById(id));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  update: RequestHandler = async (request, response, next) => {
+    try {
+      const id = vehicleIdSchema.parse(request.params.id);
+      const input = updateVehicleSchema.parse(request.body);
+      response.json(await this.vehicleService.update(id, input));
     } catch (error) {
       next(error);
     }

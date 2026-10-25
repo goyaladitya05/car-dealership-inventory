@@ -32,6 +32,14 @@ export interface VehicleSearch {
   maxPrice?: number | undefined;
 }
 
+export interface UpdateVehicleInput {
+  make?: string | undefined;
+  model?: string | undefined;
+  category?: string | undefined;
+  price?: number | undefined;
+  quantity?: number | undefined;
+}
+
 function escapeLike(value: string) {
   return value.replace(/[\\%_]/g, '\\$&');
 }
@@ -100,6 +108,24 @@ export class VehicleRepository {
       .select()
       .from(vehicles)
       .where(eq(vehicles.id, id));
+
+    return vehicle ? toVehicle(vehicle) : undefined;
+  }
+
+  async update(
+    id: string,
+    input: UpdateVehicleInput,
+  ): Promise<Vehicle | undefined> {
+    const { price, ...fields } = input;
+    const [vehicle] = await this.db
+      .update(vehicles)
+      .set({
+        ...fields,
+        ...(price === undefined ? {} : { price: price.toString() }),
+        updatedAt: new Date(),
+      })
+      .where(eq(vehicles.id, id))
+      .returning();
 
     return vehicle ? toVehicle(vehicle) : undefined;
   }
