@@ -42,6 +42,20 @@ export class VehicleService {
     return vehicle;
   }
 
+  async purchase(id: string, quantity: number): Promise<Vehicle> {
+    const vehicle = await this.vehicles.purchase(id, quantity);
+
+    if (vehicle) {
+      return vehicle;
+    }
+
+    if (!(await this.vehicles.findById(id))) {
+      throw new AppError(404, 'Vehicle not found');
+    }
+
+    throw new AppError(409, 'Insufficient stock');
+  }
+
   async delete(id: string): Promise<void> {
     if (!(await this.vehicles.delete(id))) {
       throw new AppError(404, 'Vehicle not found');

@@ -130,6 +130,19 @@ export class VehicleRepository {
     return vehicle ? toVehicle(vehicle) : undefined;
   }
 
+  async purchase(id: string, quantity: number): Promise<Vehicle | undefined> {
+    const [vehicle] = await this.db
+      .update(vehicles)
+      .set({
+        quantity: sql`${vehicles.quantity} - ${quantity}`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(vehicles.id, id), gte(vehicles.quantity, quantity)))
+      .returning();
+
+    return vehicle ? toVehicle(vehicle) : undefined;
+  }
+
   async delete(id: string): Promise<boolean> {
     const deleted = await this.db
       .delete(vehicles)
