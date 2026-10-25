@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
+  --color-canvas: #fbfbfd;
+  --color-surface: #ffffff;
+  --color-ink: #202231;
+  --color-muted: #696b76;
+  --color-line: #dedfe5;
+  --color-night: #24283d;
+  --color-periwinkle: #cbd5ff;
+  --color-apricot: #ff8a42;
+  --shadow-soft: 0 24px 70px rgb(30 37 74 / 8%);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .auth-glow {
+    position: absolute;
+    inset: -10rem -20% auto;
+    height: 38rem;
+    background:
+      radial-gradient(
+        ellipse at 50% 0%,
+        rgb(255 130 50 / 88%) 0%,
+        rgb(255 171 112 / 58%) 24%,
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse at 50% 36%,
+        rgb(175 192 255 / 72%) 0%,
+        rgb(219 226 255 / 48%) 40%,
+        transparent 70%
+      );
+    filter: blur(28px);
+    pointer-events: none;
+  }
+
+  .dashboard-glow {
+    position: absolute;
+    inset: -18rem -25% auto;
+    height: 45rem;
+    background:
+      radial-gradient(
+        ellipse at 55% 5%,
+        rgb(255 139 70 / 70%) 0%,
+        transparent 48%
+      ),
+      radial-gradient(
+        ellipse at 42% 45%,
+        rgb(181 197 255 / 68%) 0%,
+        transparent 68%
+      );
+    filter: blur(36px);
+    pointer-events: none;
+  }
+}
