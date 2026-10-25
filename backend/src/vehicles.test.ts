@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from './app.js';
 import type { DatabaseConnection } from './db/index.js';
+import { vehicles } from './db/schema.js';
 import { createTestDb } from './db/testing.js';
 
 const config = {
@@ -110,5 +111,59 @@ describe('POST /api/vehicles', () => {
 
     expect(response.status).toBe(403);
     expect(response.body).toEqual({ error: 'Forbidden' });
+  });
+});
+
+describe('GET /api/vehicles', () => {
+  let connection: DatabaseConnection;
+
+  beforeAll(async () => {
+    connection = await createTestDb();
+    await connection.db.insert(vehicles).values([
+      {
+        make: 'Honda',
+        model: 'Civic',
+        category: 'Sedan',
+        price: '25000.00',
+        quantity: 2,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+      {
+        make: 'Ford',
+        model: 'Explorer',
+        category: 'SUV',
+        price: '48000.50',
+        quantity: 1,
+        createdAt: new Date('2026-02-01T00:00:00.000Z'),
+      },
+    ]);
+  });
+
+  afterAll(async () => {
+    await connection.close();
+  });
+
+  it('lists vehicles by newest first with numeric prices', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .get('/api/vehicles')
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+    expect(response.body.map((vehicle: { make: string }) => vehicle.make)).toEqual([
+      'Ford',
+      'Honda',
+    ]);
+    expect(response.body[0]).toMatchObject({ price: 48000.5, quantity: 1 });
+    expect(typeof response.body[0].price).toBe('number');
+  });
+
+  it('requires authentication', async () => {
+    const response = await request(createApp({ db: connection.db, config })).get(
+      '/api/vehicles',
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'Unauthorized' });
   });
 });
