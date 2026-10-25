@@ -16,11 +16,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
 });
 
-export function VehicleCard({
-  vehicle,
-  token,
-  onPurchased,
-}: VehicleCardProps) {
+export function VehicleCard({ vehicle, token, onPurchased }: VehicleCardProps) {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [message, setMessage] = useState<{
     kind: 'success' | 'error';

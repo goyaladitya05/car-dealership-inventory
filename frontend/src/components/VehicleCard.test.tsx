@@ -35,9 +35,7 @@ describe('VehicleCard', () => {
   });
 
   it('formats vehicle details and disables purchase when sold out', () => {
-    render(
-      <VehicleCardHarness initialVehicle={{ ...vehicle, quantity: 0 }} />,
-    );
+    render(<VehicleCardHarness initialVehicle={{ ...vehicle, quantity: 0 }} />);
 
     expect(screen.getByRole('heading', { name: 'Tata Nexon' })).toBeVisible();
     expect(screen.getByText('$32,999.50')).toBeVisible();

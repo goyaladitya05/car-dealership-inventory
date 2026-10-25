@@ -126,7 +126,9 @@ describe('DashboardPage', () => {
   it('shows the API error and can retry', async () => {
     const fetchMock = vi
       .spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(jsonResponse({ error: 'Inventory unavailable' }, 503))
+      .mockResolvedValueOnce(
+        jsonResponse({ error: 'Inventory unavailable' }, 503),
+      )
       .mockResolvedValueOnce(jsonResponse(vehicles));
 
     renderDashboard();

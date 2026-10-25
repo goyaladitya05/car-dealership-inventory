@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  listVehicles,
-  purchaseVehicle,
-  searchVehicles,
-} from './vehicles-api';
+import { listVehicles, purchaseVehicle, searchVehicles } from './vehicles-api';
 
 const vehicle = {
   id: 'vehicle-1',
@@ -79,17 +75,14 @@ describe('vehicles API', () => {
     await expect(
       purchaseVehicle('vehicle-1', 2, 'signed-token'),
     ).resolves.toEqual(updatedVehicle);
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/vehicles/vehicle-1/purchase',
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          Authorization: 'Bearer signed-token',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ quantity: 2 }),
+    expect(fetchMock).toHaveBeenCalledWith('/api/vehicles/vehicle-1/purchase', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer signed-token',
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({ quantity: 2 }),
+    });
   });
 });

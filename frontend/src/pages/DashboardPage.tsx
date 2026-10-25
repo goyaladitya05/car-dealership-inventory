@@ -120,7 +120,9 @@ export function DashboardPage() {
   );
 
   useEffect(() => {
-    void loadInventory({});
+    const initialLoad = setTimeout(() => void loadInventory({}), 0);
+
+    return () => clearTimeout(initialLoad);
   }, [loadInventory]);
 
   const summary = useMemo(
