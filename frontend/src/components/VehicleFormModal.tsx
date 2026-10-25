@@ -57,11 +57,7 @@ function validate(values: FormValues): FormErrors {
   }
 
   const quantity = Number(values.quantity);
-  if (
-    !values.quantity ||
-    !Number.isInteger(quantity) ||
-    quantity < 0
-  ) {
+  if (!values.quantity || !Number.isInteger(quantity) || quantity < 0) {
     errors.quantity = 'Quantity must be a whole number of 0 or more';
   }
 

@@ -235,8 +235,7 @@ export function DashboardPage() {
                 </Button>
               ) : null}
               <p className="text-sm text-muted">
-                {vehicles.length}{' '}
-                {vehicles.length === 1 ? 'model' : 'models'}
+                {vehicles.length} {vehicles.length === 1 ? 'model' : 'models'}
                 {' shown'}
               </p>
             </div>

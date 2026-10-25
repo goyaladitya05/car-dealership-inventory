@@ -151,7 +151,9 @@ describe('DashboardPage', () => {
     expect(
       screen.queryByRole('button', { name: 'Add vehicle' }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Edit/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Edit/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Restock/ }),
     ).not.toBeInTheDocument();
@@ -210,9 +212,7 @@ describe('DashboardPage', () => {
     await userEvent.type(dialog.getByLabelText('Category'), 'Sedan');
     await userEvent.type(dialog.getByLabelText('Price'), '32000');
     await userEvent.type(dialog.getByLabelText('Quantity'), '4');
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Add vehicle' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Add vehicle' }));
 
     expect(await screen.findByText('Toyota Camry')).toBeVisible();
     expect(screen.getByText('4 models shown')).toBeVisible();
@@ -267,7 +267,9 @@ describe('DashboardPage', () => {
       screen.getByRole('button', { name: 'Delete Tata Nexon' }),
     );
     expect(screen.getByText('Delete Tata Nexon?')).toBeVisible();
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel delete' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Cancel delete' }),
+    );
 
     expect(screen.queryByText('Delete Tata Nexon?')).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -275,7 +277,9 @@ describe('DashboardPage', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Delete Tata Nexon' }),
     );
-    await userEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Confirm delete' }),
+    );
 
     expect(fetchMock).toHaveBeenLastCalledWith('/api/vehicles/vehicle-1', {
       method: 'DELETE',

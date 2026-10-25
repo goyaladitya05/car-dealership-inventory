@@ -62,7 +62,9 @@ describe('VehicleFormModal', () => {
     await userEvent.type(screen.getByLabelText('Quantity'), '1.5');
     await userEvent.click(screen.getByRole('button', { name: 'Add vehicle' }));
 
-    expect(screen.getByText('Make must be 100 characters or less')).toBeVisible();
+    expect(
+      screen.getByText('Make must be 100 characters or less'),
+    ).toBeVisible();
     expect(
       screen.getByText('Quantity must be a whole number of 0 or more'),
     ).toBeVisible();

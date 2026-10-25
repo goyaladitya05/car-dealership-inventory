@@ -63,11 +63,7 @@ export function createVehicle(input: VehicleInput, token: string) {
   });
 }
 
-export function updateVehicle(
-  id: string,
-  input: VehicleUpdate,
-  token: string,
-) {
+export function updateVehicle(id: string, input: VehicleUpdate, token: string) {
   return apiRequest<Vehicle>(`/api/vehicles/${id}`, {
     method: 'PUT',
     body: input,
