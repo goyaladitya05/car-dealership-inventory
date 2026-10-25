@@ -96,7 +96,7 @@ export class VehicleController {
   purchase: RequestHandler = async (request, response, next) => {
     try {
       const id = vehicleIdSchema.parse(request.params.id);
-      const { quantity } = purchaseVehicleSchema.parse(request.body);
+      const { quantity } = purchaseVehicleSchema.parse(request.body ?? {});
       response.json(await this.vehicleService.purchase(id, quantity));
     } catch (error) {
       next(error);
