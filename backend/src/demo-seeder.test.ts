@@ -31,7 +31,9 @@ describe('demo data seeding', () => {
 
     const seededUsers = await connection.db.select().from(users);
     const seededVehicles = await connection.db.select().from(vehicles);
-    const demoUser = seededUsers.find((user) => user.email === options.demoUserEmail);
+    const demoUser = seededUsers.find(
+      (user) => user.email === options.demoUserEmail,
+    );
 
     expect(seededUsers).toHaveLength(2);
     expect(demoUser?.role).toBe('user');
