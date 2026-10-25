@@ -7,7 +7,7 @@ export interface Vehicle {
   category: string;
   price: number;
   quantity: number;
-  imageUrl?: string | null;
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,6 +26,7 @@ export interface VehicleInput {
   category: string;
   price: number;
   quantity: number;
+  imageUrl?: string | null;
 }
 
 export type VehicleUpdate = Partial<VehicleInput>;
