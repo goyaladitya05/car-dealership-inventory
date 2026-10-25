@@ -9,7 +9,9 @@ import { Pool } from 'pg';
 
 import * as schema from './schema.js';
 
-const migrationsFolder = fileURLToPath(new URL('../../drizzle', import.meta.url));
+const migrationsFolder = fileURLToPath(
+  new URL('../../drizzle', import.meta.url),
+);
 
 export type Database =
   | ReturnType<typeof createNodePostgresDb<typeof schema>>
@@ -25,16 +27,25 @@ interface CreateDbOptions {
   dataDir?: string;
 }
 
+function createPostgresPool(databaseUrl: string) {
+  const hostname = new URL(databaseUrl).hostname;
+  const usesNeon = hostname === 'neon.tech' || hostname.endsWith('.neon.tech');
+
+  return new Pool({
+    connectionString: databaseUrl,
+    max: 2,
+    ...(usesNeon ? { ssl: true } : {}),
+  });
+}
+
 export async function createDb(
   options: CreateDbOptions = {},
 ): Promise<DatabaseConnection> {
   const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL;
 
   if (databaseUrl) {
-    const client = new Pool({ connectionString: databaseUrl });
+    const client = createPostgresPool(databaseUrl);
     const db = createNodePostgresDb(client, { schema });
-
-    await migrateNodePostgres(db, { migrationsFolder });
 
     return { db, close: () => client.end() };
   }
@@ -45,4 +56,31 @@ export async function createDb(
   await migratePglite(db, { migrationsFolder });
 
   return { db, close: () => client.close() };
+}
+
+export async function migrateDatabase(
+  options: CreateDbOptions = {},
+): Promise<void> {
+  const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL;
+
+  if (databaseUrl) {
+    const client = createPostgresPool(databaseUrl);
+    const db = createNodePostgresDb(client, { schema });
+
+    try {
+      await migrateNodePostgres(db, { migrationsFolder });
+    } finally {
+      await client.end();
+    }
+    return;
+  }
+
+  const client = new PGlite(options.dataDir ?? './.data');
+  const db = createPgliteDb(client, { schema });
+
+  try {
+    await migratePglite(db, { migrationsFolder });
+  } finally {
+    await client.close();
+  }
 }
