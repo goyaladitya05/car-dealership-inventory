@@ -12,6 +12,7 @@ export function createVehicleRouter(controller: VehicleController) {
   router.get('/:id', controller.getById);
   router.post('/', requireRole('admin'), controller.create);
   router.post('/:id/purchase', controller.purchase);
+  router.post('/:id/restock', requireRole('admin'), controller.restock);
   router.put('/:id', requireRole('admin'), controller.update);
   router.delete('/:id', requireRole('admin'), controller.delete);
 

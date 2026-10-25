@@ -56,6 +56,16 @@ export class VehicleService {
     throw new AppError(409, 'Insufficient stock');
   }
 
+  async restock(id: string, quantity: number): Promise<Vehicle> {
+    const vehicle = await this.vehicles.restock(id, quantity);
+
+    if (!vehicle) {
+      throw new AppError(404, 'Vehicle not found');
+    }
+
+    return vehicle;
+  }
+
   async delete(id: string): Promise<void> {
     if (!(await this.vehicles.delete(id))) {
       throw new AppError(404, 'Vehicle not found');

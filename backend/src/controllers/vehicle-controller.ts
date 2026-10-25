@@ -16,6 +16,9 @@ const updateVehicleSchema = createVehicleSchema.partial().extend({
 const purchaseVehicleSchema = z.object({
   quantity: z.number().int().positive().default(1),
 });
+const restockVehicleSchema = z.object({
+  quantity: z.number().int().positive(),
+});
 
 const optionalPrice = z.preprocess(
   (value) => (value === '' ? Number.NaN : value),
@@ -95,6 +98,16 @@ export class VehicleController {
       const id = vehicleIdSchema.parse(request.params.id);
       const { quantity } = purchaseVehicleSchema.parse(request.body);
       response.json(await this.vehicleService.purchase(id, quantity));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  restock: RequestHandler = async (request, response, next) => {
+    try {
+      const id = vehicleIdSchema.parse(request.params.id);
+      const { quantity } = restockVehicleSchema.parse(request.body);
+      response.json(await this.vehicleService.restock(id, quantity));
     } catch (error) {
       next(error);
     }
