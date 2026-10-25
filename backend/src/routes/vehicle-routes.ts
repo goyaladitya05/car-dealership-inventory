@@ -8,6 +8,7 @@ export function createVehicleRouter(controller: VehicleController) {
 
   router.use(authenticate);
   router.get('/', controller.list);
+  router.get('/search', controller.search);
   router.post('/', requireRole('admin'), controller.create);
 
   return router;

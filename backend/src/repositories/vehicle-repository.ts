@@ -1,4 +1,4 @@
-import { desc } from 'drizzle-orm';
+import { and, desc, eq, gte, ilike, lte, sql } from 'drizzle-orm';
 
 import type { Database } from '../db/index.js';
 import { vehicles } from '../db/schema.js';
@@ -22,6 +22,18 @@ export interface CreateVehicleInput {
   category: string;
   price: number;
   quantity: number;
+}
+
+export interface VehicleSearch {
+  make?: string | undefined;
+  model?: string | undefined;
+  category?: string | undefined;
+  minPrice?: number | undefined;
+  maxPrice?: number | undefined;
+}
+
+function escapeLike(value: string) {
+  return value.replace(/[\\%_]/g, '\\$&');
 }
 
 function toVehicle(row: VehicleRow): Vehicle {
@@ -48,6 +60,36 @@ export class VehicleRepository {
     const rows = await this.db
       .select()
       .from(vehicles)
+      .orderBy(desc(vehicles.createdAt));
+
+    return rows.map(toVehicle);
+  }
+
+  async search(input: VehicleSearch): Promise<Vehicle[]> {
+    const conditions = [
+      input.make === undefined
+        ? undefined
+        : ilike(vehicles.make, `%${escapeLike(input.make)}%`),
+      input.model === undefined
+        ? undefined
+        : ilike(vehicles.model, `%${escapeLike(input.model)}%`),
+      input.category === undefined
+        ? undefined
+        : eq(
+            sql<string>`lower(${vehicles.category})`,
+            input.category.toLowerCase(),
+          ),
+      input.minPrice === undefined
+        ? undefined
+        : gte(vehicles.price, input.minPrice.toString()),
+      input.maxPrice === undefined
+        ? undefined
+        : lte(vehicles.price, input.maxPrice.toString()),
+    ];
+    const rows = await this.db
+      .select()
+      .from(vehicles)
+      .where(and(...conditions))
       .orderBy(desc(vehicles.createdAt));
 
     return rows.map(toVehicle);
