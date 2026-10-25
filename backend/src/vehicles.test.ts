@@ -435,3 +435,78 @@ describe('PUT /api/vehicles/:id', () => {
     expect(response.body).toEqual({ error: 'Forbidden' });
   });
 });
+
+describe('DELETE /api/vehicles/:id', () => {
+  let connection: DatabaseConnection;
+  let vehicleId: string;
+
+  beforeAll(async () => {
+    connection = await createTestDb();
+    const [vehicle] = await connection.db
+      .insert(vehicles)
+      .values({
+        make: 'Nissan',
+        model: 'Leaf',
+        category: 'Hatchback',
+        price: '29000.00',
+        quantity: 2,
+      })
+      .returning();
+    vehicleId = vehicle!.id;
+  });
+
+  afterAll(async () => {
+    await connection.close();
+  });
+
+  it('deletes a vehicle as an admin', async () => {
+    const app = createApp({ db: connection.db, config });
+    const response = await request(app)
+      .delete(`/api/vehicles/${vehicleId}`)
+      .set('Authorization', `Bearer ${tokenFor('admin')}`);
+
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
+
+    const getResponse = await request(app)
+      .get(`/api/vehicles/${vehicleId}`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+    expect(getResponse.status).toBe(404);
+  });
+
+  it('returns 404 when the vehicle does not exist', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .delete('/api/vehicles/00000000-0000-4000-8000-000000000000')
+      .set('Authorization', `Bearer ${tokenFor('admin')}`);
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: 'Vehicle not found' });
+  });
+
+  it('returns 400 for an invalid vehicle id', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .delete('/api/vehicles/not-a-uuid')
+      .set('Authorization', `Bearer ${tokenFor('admin')}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Validation failed');
+  });
+
+  it('requires authentication', async () => {
+    const response = await request(createApp({ db: connection.db, config })).delete(
+      '/api/vehicles/00000000-0000-4000-8000-000000000000',
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'Unauthorized' });
+  });
+
+  it('requires the admin role', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .delete('/api/vehicles/00000000-0000-4000-8000-000000000000')
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+
+    expect(response.status).toBe(403);
+    expect(response.body).toEqual({ error: 'Forbidden' });
+  });
+});
