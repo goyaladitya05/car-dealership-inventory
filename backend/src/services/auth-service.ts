@@ -38,11 +38,10 @@ export class AuthService {
   }
 
   private createAuthResult(user: User): AuthResult {
-    const token = jwt.sign(
-      { role: user.role },
-      this.config.jwtSecret,
-      { subject: user.id, expiresIn: '1d' },
-    );
+    const token = jwt.sign({ role: user.role }, this.config.jwtSecret, {
+      subject: user.id,
+      expiresIn: '1d',
+    });
 
     return {
       token,

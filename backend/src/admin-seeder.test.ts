@@ -49,8 +49,8 @@ describe('admin seeding', () => {
       .where(eq(users.email, 'existing@example.com'));
 
     expect(admin?.role).toBe('admin');
-    expect(await bcrypt.compare('new-password', admin?.passwordHash ?? '')).toBe(
-      true,
-    );
+    expect(
+      await bcrypt.compare('new-password', admin?.passwordHash ?? ''),
+    ).toBe(true);
   });
 });

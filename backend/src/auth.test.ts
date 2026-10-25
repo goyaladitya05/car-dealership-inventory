@@ -26,9 +26,7 @@ describe('POST /api/auth/register', () => {
   });
 
   it('registers a user and returns an authentication token', async () => {
-    const response = await request(
-      createApp({ db: connection.db, config }),
-    )
+    const response = await request(createApp({ db: connection.db, config }))
       .post('/api/auth/register')
       .send({ email: 'new@example.com', password: 'password123' });
 
@@ -57,9 +55,7 @@ describe('POST /api/auth/register', () => {
     [{ email: 'invalid', password: 'password123' }, 'email'],
     [{ email: 'valid@example.com', password: 'short' }, 'password'],
   ])('rejects invalid registration data', async (body, field) => {
-    const response = await request(
-      createApp({ db: connection.db, config }),
-    )
+    const response = await request(createApp({ db: connection.db, config }))
       .post('/api/auth/register')
       .send(body);
 
@@ -77,9 +73,9 @@ describe('POST /api/auth/register', () => {
       password: 'password123',
     };
 
-    expect((await request(app).post('/api/auth/register').send(credentials)).status).toBe(
-      201,
-    );
+    expect(
+      (await request(app).post('/api/auth/register').send(credentials)).status,
+    ).toBe(201);
     const response = await request(app)
       .post('/api/auth/register')
       .send(credentials);
@@ -104,9 +100,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('logs in with valid credentials', async () => {
-    const response = await request(
-      createApp({ db: connection.db, config }),
-    )
+    const response = await request(createApp({ db: connection.db, config }))
       .post('/api/auth/login')
       .send({ email: 'login@example.com', password: 'password123' });
 
@@ -125,9 +119,7 @@ describe('POST /api/auth/login', () => {
     { email: 'missing@example.com', password: 'password123' },
     { email: 'login@example.com', password: 'wrong-password' },
   ])('rejects incorrect credentials with a generic message', async (body) => {
-    const response = await request(
-      createApp({ db: connection.db, config }),
-    )
+    const response = await request(createApp({ db: connection.db, config }))
       .post('/api/auth/login')
       .send(body);
 
@@ -136,9 +128,7 @@ describe('POST /api/auth/login', () => {
   });
 
   it('validates login data', async () => {
-    const response = await request(
-      createApp({ db: connection.db, config }),
-    )
+    const response = await request(createApp({ db: connection.db, config }))
       .post('/api/auth/login')
       .send({ email: 'invalid', password: 'short' });
 

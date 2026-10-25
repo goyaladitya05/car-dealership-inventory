@@ -19,11 +19,8 @@ function createTestApp() {
   app.get('/profile', authenticate, (request, response) => {
     response.json({ user: request.user });
   });
-  app.get(
-    '/admin',
-    authenticate,
-    requireRole('admin'),
-    (_request, response) => response.json({ allowed: true }),
+  app.get('/admin', authenticate, requireRole('admin'), (_request, response) =>
+    response.json({ allowed: true }),
   );
   app.use(errorHandler);
   return app;
@@ -46,21 +43,20 @@ describe('authentication middleware', () => {
     });
   });
 
-  it.each([
-    undefined,
-    'Basic credentials',
-    'Bearer invalid-token',
-  ])('rejects a missing or invalid bearer token', async (authorization) => {
-    const pendingRequest = request(createTestApp()).get('/profile');
-    if (authorization) {
-      pendingRequest.set('Authorization', authorization);
-    }
+  it.each([undefined, 'Basic credentials', 'Bearer invalid-token'])(
+    'rejects a missing or invalid bearer token',
+    async (authorization) => {
+      const pendingRequest = request(createTestApp()).get('/profile');
+      if (authorization) {
+        pendingRequest.set('Authorization', authorization);
+      }
 
-    const response = await pendingRequest;
+      const response = await pendingRequest;
 
-    expect(response.status).toBe(401);
-    expect(response.body).toEqual({ error: 'Unauthorized' });
-  });
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({ error: 'Unauthorized' });
+    },
+  );
 
   it('rejects an authenticated user without the required role', async () => {
     const token = jwt.sign({ role: 'user' }, config.jwtSecret, {
