@@ -95,6 +95,8 @@ export function VehicleCard({ vehicle, token, onPurchased }: VehicleCardProps) {
             >
               {message.text}
             </p>
+          ) : soldOut ? (
+            <p className="text-red-700">Unavailable</p>
           ) : lowStock ? (
             <p className="text-orange-700">Low stock</p>
           ) : (
