@@ -96,6 +96,16 @@ describe('POST /api/vehicles', () => {
         model: 'Camry',
         category: 'Sedan',
         price: 10,
+        imageUrl: 'not-a-url',
+      },
+      'imageUrl',
+    ],
+    [
+      {
+        make: 'Toyota',
+        model: 'Camry',
+        category: 'Sedan',
+        price: 10,
         imageUrl: 'http://images.example.com/camry.jpg',
       },
       'imageUrl',
