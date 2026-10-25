@@ -646,3 +646,93 @@ describe('POST /api/vehicles/:id/purchase', () => {
     expect(getResponse.body.quantity).toBe(0);
   });
 });
+
+describe('POST /api/vehicles/:id/restock', () => {
+  let connection: DatabaseConnection;
+  let vehicleId: string;
+
+  beforeAll(async () => {
+    connection = await createTestDb();
+    const [vehicle] = await connection.db
+      .insert(vehicles)
+      .values({
+        make: 'Kia',
+        model: 'EV6',
+        category: 'SUV',
+        price: '42000.00',
+        quantity: 2,
+      })
+      .returning();
+    vehicleId = vehicle!.id;
+  });
+
+  afterAll(async () => {
+    await connection.close();
+  });
+
+  it('restocks a vehicle as an admin', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .post(`/api/vehicles/${vehicleId}/restock`)
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({ quantity: 3 });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      id: vehicleId,
+      quantity: 5,
+      price: 42000,
+    });
+  });
+
+  it('returns 404 when the vehicle does not exist', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .post('/api/vehicles/00000000-0000-4000-8000-000000000000/restock')
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({ quantity: 1 });
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: 'Vehicle not found' });
+  });
+
+  it.each([{}, { quantity: 0 }, { quantity: -1 }, { quantity: 1.5 }])(
+    'rejects invalid restock data %#',
+    async (body) => {
+      const response = await request(createApp({ db: connection.db, config }))
+        .post(`/api/vehicles/${vehicleId}/restock`)
+        .set('Authorization', `Bearer ${tokenFor('admin')}`)
+        .send(body);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Validation failed');
+    },
+  );
+
+  it('returns 400 for an invalid vehicle id', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .post('/api/vehicles/not-a-uuid/restock')
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({ quantity: 1 });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Validation failed');
+  });
+
+  it('requires authentication', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .post(`/api/vehicles/${vehicleId}/restock`)
+      .send({ quantity: 1 });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'Unauthorized' });
+  });
+
+  it('requires the admin role', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .post(`/api/vehicles/${vehicleId}/restock`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`)
+      .send({ quantity: 1 });
+
+    expect(response.status).toBe(403);
+    expect(response.body).toEqual({ error: 'Forbidden' });
+  });
+});
