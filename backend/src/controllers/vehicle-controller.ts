@@ -3,13 +3,7 @@ import { z } from 'zod';
 
 import type { VehicleService } from '../services/vehicle-service.js';
 
-const imageUrlSchema = z
-  .string()
-  .max(2048)
-  .url()
-  .refine((value) => new URL(value).protocol === 'https:', {
-    message: 'Image URL must use HTTPS',
-  });
+const imageUrlSchema = z.url({ protocol: /^https$/ }).max(2048);
 
 const createVehicleSchema = z.object({
   make: z.string().trim().min(1).max(100),
