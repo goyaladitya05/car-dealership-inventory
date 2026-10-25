@@ -94,4 +94,13 @@ export class VehicleRepository {
 
     return rows.map(toVehicle);
   }
+
+  async findById(id: string): Promise<Vehicle | undefined> {
+    const [vehicle] = await this.db
+      .select()
+      .from(vehicles)
+      .where(eq(vehicles.id, id));
+
+    return vehicle ? toVehicle(vehicle) : undefined;
+  }
 }

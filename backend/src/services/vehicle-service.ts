@@ -4,6 +4,7 @@ import type {
   VehicleRepository,
   VehicleSearch,
 } from '../repositories/vehicle-repository.js';
+import { AppError } from '../errors/app-error.js';
 
 export class VehicleService {
   constructor(private readonly vehicles: VehicleRepository) {}
@@ -18,5 +19,15 @@ export class VehicleService {
 
   search(input: VehicleSearch): Promise<Vehicle[]> {
     return this.vehicles.search(input);
+  }
+
+  async getById(id: string): Promise<Vehicle> {
+    const vehicle = await this.vehicles.findById(id);
+
+    if (!vehicle) {
+      throw new AppError(404, 'Vehicle not found');
+    }
+
+    return vehicle;
   }
 }

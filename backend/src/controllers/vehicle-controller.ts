@@ -29,6 +29,7 @@ const searchVehicleSchema = z
       minPrice === undefined || maxPrice === undefined || minPrice <= maxPrice,
     { message: 'Minimum price must not exceed maximum price', path: ['minPrice'] },
   );
+const vehicleIdSchema = z.uuid();
 
 export class VehicleController {
   constructor(private readonly vehicleService: VehicleService) {}
@@ -56,6 +57,15 @@ export class VehicleController {
     try {
       const query = searchVehicleSchema.parse(request.query);
       response.json(await this.vehicleService.search(query));
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getById: RequestHandler = async (request, response, next) => {
+    try {
+      const id = vehicleIdSchema.parse(request.params.id);
+      response.json(await this.vehicleService.getById(id));
     } catch (error) {
       next(error);
     }
