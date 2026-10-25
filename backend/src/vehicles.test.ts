@@ -549,6 +549,17 @@ describe('POST /api/vehicles/:id/purchase', () => {
     });
   });
 
+  it('purchases one vehicle when the body is omitted', async () => {
+    const vehicle = await createVehicle(2);
+
+    const response = await request(createApp({ db: connection.db, config }))
+      .post(`/api/vehicles/${vehicle.id}/purchase`)
+      .set('Authorization', `Bearer ${tokenFor('user')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.quantity).toBe(1);
+  });
+
   it('purchases the requested quantity', async () => {
     const vehicle = await createVehicle(5);
 
