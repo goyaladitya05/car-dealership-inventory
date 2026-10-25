@@ -41,4 +41,10 @@ export class VehicleService {
 
     return vehicle;
   }
+
+  async delete(id: string): Promise<void> {
+    if (!(await this.vehicles.delete(id))) {
+      throw new AppError(404, 'Vehicle not found');
+    }
+  }
 }

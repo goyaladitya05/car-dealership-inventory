@@ -83,4 +83,14 @@ export class VehicleController {
       next(error);
     }
   };
+
+  delete: RequestHandler = async (request, response, next) => {
+    try {
+      const id = vehicleIdSchema.parse(request.params.id);
+      await this.vehicleService.delete(id);
+      response.sendStatus(204);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

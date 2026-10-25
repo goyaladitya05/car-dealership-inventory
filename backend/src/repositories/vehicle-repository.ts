@@ -129,4 +129,13 @@ export class VehicleRepository {
 
     return vehicle ? toVehicle(vehicle) : undefined;
   }
+
+  async delete(id: string): Promise<boolean> {
+    const deleted = await this.db
+      .delete(vehicles)
+      .where(eq(vehicles.id, id))
+      .returning({ id: vehicles.id });
+
+    return deleted.length > 0;
+  }
 }
