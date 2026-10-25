@@ -88,3 +88,62 @@ describe('POST /api/auth/register', () => {
     expect(response.body).toEqual({ error: 'Email already registered' });
   });
 });
+
+describe('POST /api/auth/login', () => {
+  let connection: DatabaseConnection;
+
+  beforeAll(async () => {
+    connection = await createTestDb();
+    await request(createApp({ db: connection.db, config }))
+      .post('/api/auth/register')
+      .send({ email: 'login@example.com', password: 'password123' });
+  });
+
+  afterAll(async () => {
+    await connection.close();
+  });
+
+  it('logs in with valid credentials', async () => {
+    const response = await request(
+      createApp({ db: connection.db, config }),
+    )
+      .post('/api/auth/login')
+      .send({ email: 'login@example.com', password: 'password123' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      token: expect.any(String),
+      user: {
+        id: expect.any(String),
+        email: 'login@example.com',
+        role: 'user',
+      },
+    });
+  });
+
+  it.each([
+    { email: 'missing@example.com', password: 'password123' },
+    { email: 'login@example.com', password: 'wrong-password' },
+  ])('rejects incorrect credentials with a generic message', async (body) => {
+    const response = await request(
+      createApp({ db: connection.db, config }),
+    )
+      .post('/api/auth/login')
+      .send(body);
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ error: 'Invalid email or password' });
+  });
+
+  it('validates login data', async () => {
+    const response = await request(
+      createApp({ db: connection.db, config }),
+    )
+      .post('/api/auth/login')
+      .send({ email: 'invalid', password: 'short' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe('Validation failed');
+    expect(response.body.details).toHaveLength(2);
+  });
+});
