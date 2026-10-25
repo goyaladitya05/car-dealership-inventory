@@ -30,7 +30,10 @@ const searchVehicleSchema = z
   .refine(
     ({ minPrice, maxPrice }) =>
       minPrice === undefined || maxPrice === undefined || minPrice <= maxPrice,
-    { message: 'Minimum price must not exceed maximum price', path: ['minPrice'] },
+    {
+      message: 'Minimum price must not exceed maximum price',
+      path: ['minPrice'],
+    },
   );
 const vehicleIdSchema = z.uuid();
 

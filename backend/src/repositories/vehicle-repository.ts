@@ -134,7 +134,7 @@ export class VehicleRepository {
     const deleted = await this.db
       .delete(vehicles)
       .where(eq(vehicles.id, id))
-      .returning({ id: vehicles.id });
+      .returning();
 
     return deleted.length > 0;
   }

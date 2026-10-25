@@ -150,18 +150,17 @@ describe('GET /api/vehicles', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveLength(2);
-    expect(response.body.map((vehicle: { make: string }) => vehicle.make)).toEqual([
-      'Ford',
-      'Honda',
-    ]);
+    expect(
+      response.body.map((vehicle: { make: string }) => vehicle.make),
+    ).toEqual(['Ford', 'Honda']);
     expect(response.body[0]).toMatchObject({ price: 48000.5, quantity: 1 });
     expect(typeof response.body[0].price).toBe('number');
   });
 
   it('requires authentication', async () => {
-    const response = await request(createApp({ db: connection.db, config })).get(
-      '/api/vehicles',
-    );
+    const response = await request(
+      createApp({ db: connection.db, config }),
+    ).get('/api/vehicles');
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: 'Unauthorized' });
@@ -208,10 +207,7 @@ describe('GET /api/vehicles/search', () => {
     ['category=SEDAN', ['Toyota', 'toyota']],
     ['category=dan', []],
     ['minPrice=20000&maxPrice=30000', ['Toyota', 'toyota']],
-    [
-      'make=toy&category=sedan&minPrice=25000&maxPrice=30000',
-      ['toyota'],
-    ],
+    ['make=toy&category=sedan&minPrice=25000&maxPrice=30000', ['toyota']],
   ])('filters vehicles with %s', async (query, expectedMakes) => {
     const response = await request(createApp({ db: connection.db, config }))
       .get(`/api/vehicles/search?${query}`)
@@ -239,9 +235,9 @@ describe('GET /api/vehicles/search', () => {
   );
 
   it('requires authentication', async () => {
-    const response = await request(createApp({ db: connection.db, config })).get(
-      '/api/vehicles/search?make=Toyota',
-    );
+    const response = await request(
+      createApp({ db: connection.db, config }),
+    ).get('/api/vehicles/search?make=Toyota');
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: 'Unauthorized' });
@@ -305,9 +301,9 @@ describe('GET /api/vehicles/:id', () => {
   });
 
   it('requires authentication', async () => {
-    const response = await request(createApp({ db: connection.db, config })).get(
-      `/api/vehicles/${vehicleId}`,
-    );
+    const response = await request(
+      createApp({ db: connection.db, config }),
+    ).get(`/api/vehicles/${vehicleId}`);
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: 'Unauthorized' });
@@ -493,9 +489,9 @@ describe('DELETE /api/vehicles/:id', () => {
   });
 
   it('requires authentication', async () => {
-    const response = await request(createApp({ db: connection.db, config })).delete(
-      '/api/vehicles/00000000-0000-4000-8000-000000000000',
-    );
+    const response = await request(
+      createApp({ db: connection.db, config }),
+    ).delete('/api/vehicles/00000000-0000-4000-8000-000000000000');
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: 'Unauthorized' });
