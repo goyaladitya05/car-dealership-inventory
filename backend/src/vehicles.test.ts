@@ -50,10 +50,29 @@ describe('POST /api/vehicles', () => {
       category: 'Sedan',
       price: 32999.5,
       quantity: 0,
+      imageUrl: null,
       createdAt: expect.any(String),
       updatedAt: expect.any(String),
     });
     expect(typeof response.body.price).toBe('number');
+  });
+
+  it('creates a vehicle with an image URL', async () => {
+    const response = await request(createApp({ db: connection.db, config }))
+      .post('/api/vehicles')
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({
+        make: 'Toyota',
+        model: 'Camry',
+        category: 'Sedan',
+        price: 32999.5,
+        imageUrl: 'https://images.example.com/camry.jpg',
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.imageUrl).toBe(
+      'https://images.example.com/camry.jpg',
+    );
   });
 
   it.each([
@@ -70,6 +89,26 @@ describe('POST /api/vehicles', () => {
         quantity: -1,
       },
       'quantity',
+    ],
+    [
+      {
+        make: 'Toyota',
+        model: 'Camry',
+        category: 'Sedan',
+        price: 10,
+        imageUrl: 'http://images.example.com/camry.jpg',
+      },
+      'imageUrl',
+    ],
+    [
+      {
+        make: 'Toyota',
+        model: 'Camry',
+        category: 'Sedan',
+        price: 10,
+        imageUrl: `https://example.com/${'a'.repeat(2030)}`,
+      },
+      'imageUrl',
     ],
     [
       {
@@ -153,7 +192,11 @@ describe('GET /api/vehicles', () => {
     expect(
       response.body.map((vehicle: { make: string }) => vehicle.make),
     ).toEqual(['Ford', 'Honda']);
-    expect(response.body[0]).toMatchObject({ price: 48000.5, quantity: 1 });
+    expect(response.body[0]).toMatchObject({
+      price: 48000.5,
+      quantity: 1,
+      imageUrl: null,
+    });
     expect(typeof response.body[0].price).toBe('number');
   });
 
@@ -219,6 +262,7 @@ describe('GET /api/vehicles/search', () => {
     ).toEqual([...expectedMakes].sort());
     for (const vehicle of response.body) {
       expect(typeof vehicle.price).toBe('number');
+      expect(vehicle.imageUrl).toBeNull();
     }
   });
 
@@ -278,6 +322,7 @@ describe('GET /api/vehicles/:id', () => {
       make: 'Mazda',
       model: 'MX-5',
       price: 32000,
+      imageUrl: null,
     });
     expect(typeof response.body.price).toBe('number');
   });
@@ -375,11 +420,34 @@ describe('PUT /api/vehicles/:id', () => {
     expect(typeof response.body.price).toBe('number');
   });
 
+  it('sets and clears the image URL', async () => {
+    const app = createApp({ db: connection.db, config });
+    const imageUrl = 'https://images.example.com/outback.jpg';
+
+    const updateResponse = await request(app)
+      .put(`/api/vehicles/${vehicleId}`)
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({ imageUrl });
+
+    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.body.imageUrl).toBe(imageUrl);
+
+    const clearResponse = await request(app)
+      .put(`/api/vehicles/${vehicleId}`)
+      .set('Authorization', `Bearer ${tokenFor('admin')}`)
+      .send({ imageUrl: null });
+
+    expect(clearResponse.status).toBe(200);
+    expect(clearResponse.body.imageUrl).toBeNull();
+  });
+
   it.each([
     [{ price: 0 }, 'price'],
     [{ quantity: -1 }, 'quantity'],
     [{ quantity: 1.5 }, 'quantity'],
     [{ make: '' }, 'make'],
+    [{ imageUrl: 'ftp://images.example.com/outback.jpg' }, 'imageUrl'],
+    [{ imageUrl: `https://example.com/${'a'.repeat(2030)}` }, 'imageUrl'],
   ])('rejects an invalid update', async (body, field) => {
     const response = await request(createApp({ db: connection.db, config }))
       .put(`/api/vehicles/${vehicleId}`)
