@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { purchaseVehicle, type Vehicle } from '../lib/vehicles-api';
+import {
+  purchaseVehicle,
+  removeVehicle,
+  type Vehicle,
+} from '../lib/vehicles-api';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 
@@ -10,6 +14,7 @@ interface VehicleCardProps {
   onPurchased: (vehicle: Vehicle) => void;
   isAdmin?: boolean;
   onEdit?: (vehicle: Vehicle) => void;
+  onDeleted?: (id: string) => void;
 }
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -25,8 +30,11 @@ export function VehicleCard({
   onPurchased,
   isAdmin = false,
   onEdit,
+  onDeleted,
 }: VehicleCardProps) {
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [message, setMessage] = useState<{
     kind: 'success' | 'error';
     text: string;
@@ -54,6 +62,24 @@ export function VehicleCard({
       });
     } finally {
       setIsPurchasing(false);
+    }
+  }
+
+  async function handleDelete() {
+    setIsDeleting(true);
+    setMessage(undefined);
+
+    try {
+      await removeVehicle(vehicle.id, token);
+      onDeleted?.(vehicle.id);
+    } catch (error) {
+      setMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Delete failed',
+      });
+      setIsConfirmingDelete(false);
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -94,33 +120,64 @@ export function VehicleCard({
       </div>
 
       {isAdmin ? (
-        <div className="mt-6 flex flex-wrap gap-2 border-t border-line/70 pt-5">
-          <Button
-            type="button"
-            variant="secondary"
-            className="min-h-9 px-4 text-xs"
-            aria-label={`Edit ${vehicle.make} ${vehicle.model}`}
-            onClick={() => onEdit?.(vehicle)}
-          >
-            Edit
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="min-h-9 px-4 text-xs"
-            aria-label={`Restock ${vehicle.make} ${vehicle.model}`}
-          >
-            Restock
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="min-h-9 px-4 text-xs text-red-700"
-            aria-label={`Delete ${vehicle.make} ${vehicle.model}`}
-          >
-            Delete
-          </Button>
-        </div>
+        isConfirmingDelete ? (
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50/80 p-4">
+            <p className="text-sm font-medium text-red-900">
+              Delete {vehicle.make} {vehicle.model}?
+            </p>
+            <p className="mt-1 text-xs leading-5 text-red-700">
+              This permanently removes the vehicle from inventory.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                className="min-h-9 px-4 text-xs"
+                disabled={isDeleting}
+                onClick={() => setIsConfirmingDelete(false)}
+              >
+                Cancel delete
+              </Button>
+              <Button
+                type="button"
+                className="min-h-9 border-red-700 bg-red-700 px-4 text-xs hover:bg-red-800"
+                disabled={isDeleting}
+                onClick={() => void handleDelete()}
+              >
+                {isDeleting ? 'Deleting...' : 'Confirm delete'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 flex flex-wrap gap-2 border-t border-line/70 pt-5">
+            <Button
+              type="button"
+              variant="secondary"
+              className="min-h-9 px-4 text-xs"
+              aria-label={`Edit ${vehicle.make} ${vehicle.model}`}
+              onClick={() => onEdit?.(vehicle)}
+            >
+              Edit
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="min-h-9 px-4 text-xs"
+              aria-label={`Restock ${vehicle.make} ${vehicle.model}`}
+            >
+              Restock
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="min-h-9 px-4 text-xs text-red-700"
+              aria-label={`Delete ${vehicle.make} ${vehicle.model}`}
+              onClick={() => setIsConfirmingDelete(true)}
+            >
+              Delete
+            </Button>
+          </div>
+        )
       ) : null}
 
       <div className="mt-7 flex min-h-12 items-center justify-between gap-3 border-t border-line/70 pt-5">

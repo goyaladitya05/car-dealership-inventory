@@ -172,6 +172,12 @@ export function DashboardPage() {
     );
   }
 
+  function handleDeleted(id: string) {
+    setVehicles((currentVehicles) =>
+      currentVehicles.filter((vehicle) => vehicle.id !== id),
+    );
+  }
+
   if (!token) {
     return null;
   }
@@ -314,6 +320,7 @@ export function DashboardPage() {
                     onPurchased={handlePurchased}
                     isAdmin={user?.role === 'admin'}
                     onEdit={setFormVehicle}
+                    onDeleted={handleDeleted}
                   />
                 ))}
               </div>
