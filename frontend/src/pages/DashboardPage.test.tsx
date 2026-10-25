@@ -247,4 +247,45 @@ describe('DashboardPage', () => {
     expect(await screen.findByText('Tata Curvv')).toBeVisible();
     expect(screen.queryByText('Tata Nexon')).not.toBeInTheDocument();
   });
+
+  it('confirms deletion inside the UI and removes the deleted card', async () => {
+    vi.mocked(useAuth).mockReturnValue({
+      token: 'signed-token',
+      user: { id: 'admin-1', email: 'admin@example.com', role: 'admin' },
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(jsonResponse(vehicles))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    renderDashboard();
+    await screen.findByText('Tata Nexon');
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Delete Tata Nexon' }),
+    );
+    expect(screen.getByText('Delete Tata Nexon?')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel delete' }));
+
+    expect(screen.queryByText('Delete Tata Nexon?')).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledOnce();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Delete Tata Nexon' }),
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
+
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/vehicles/vehicle-1', {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer signed-token',
+      },
+    });
+    expect(screen.queryByText('Tata Nexon')).not.toBeInTheDocument();
+    expect(screen.getByText('Honda City')).toBeVisible();
+    expect(screen.getByText('2 models shown')).toBeVisible();
+  });
 });
