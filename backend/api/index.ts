@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import type { Request, Response } from 'express';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { createApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
@@ -17,7 +17,10 @@ async function initializeApp() {
 
 let appPromise: ReturnType<typeof initializeApp> | undefined;
 
-export default async function handler(request: Request, response: Response) {
+export default async function handler(
+  request: IncomingMessage,
+  response: ServerResponse,
+) {
   appPromise ??= initializeApp();
   const app = await appPromise;
   app(request, response);
