@@ -90,17 +90,16 @@ npm run test:coverage
 
 ## Deployment
 
-Create two Vercel projects from this repository. Set their root directories to `backend` and `frontend`, and name the backend project `autovault-api`. The frontend configuration sends `/api` requests to that project and falls back to `index.html` for SPA routes.
+Import the repository root as one Vercel project. The root `vercel.json` builds the Express backend and Vite frontend as separate services in one deployment, routes `/api/*` to the backend, and sends all other paths to the frontend with an SPA fallback.
 
-Create a Neon PostgreSQL database and set these backend environment variables:
+Add Neon through the Vercel Storage integration. The integration creates the database and sets `DATABASE_URL`. Set these additional project environment variables:
 
-- `DATABASE_URL`: Neon connection string
 - `JWT_SECRET`: secret with at least 32 characters
 - `CORS_ORIGIN`: deployed frontend URL
 - `ADMIN_EMAIL` and `ADMIN_PASSWORD`: seeded admin credentials
 - `DEMO_USER_EMAIL` and `DEMO_USER_PASSWORD`: seeded user credentials
 
-The backend Vercel build runs database migrations. After configuring the Neon values in `backend/.env`, run `npm run seed` once from `backend` to create the demo accounts and inventory.
+The backend build runs database migrations. After the first deployment, copy the production environment values into `backend/.env` and run `npm run seed` once from `backend` to create the demo accounts and inventory.
 
 ## Photo credits
 
