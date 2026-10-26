@@ -61,11 +61,15 @@ let appPromise: ReturnType<typeof initializeApp> | undefined;
 const app = express();
 
 app.use(async (request, response, next) => {
+  const pendingApp = (appPromise ??= initializeApp());
+
   try {
-    appPromise ??= initializeApp();
-    const initializedApp = await appPromise;
+    const initializedApp = await pendingApp;
     initializedApp(request, response, next);
   } catch (error) {
+    if (appPromise === pendingApp) {
+      appPromise = undefined;
+    }
     next(error);
   }
 });
