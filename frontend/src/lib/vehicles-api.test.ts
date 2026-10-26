@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { listVehicles, purchaseVehicle, searchVehicles } from './vehicles-api';
+import {
+  createVehicle,
+  listVehicles,
+  purchaseVehicle,
+  removeVehicle,
+  restockVehicle,
+  searchVehicles,
+  updateVehicle,
+} from './vehicles-api';
 
 const vehicle = {
   id: 'vehicle-1',
@@ -76,6 +84,89 @@ describe('vehicles API', () => {
       purchaseVehicle('vehicle-1', 2, 'signed-token'),
     ).resolves.toEqual(updatedVehicle);
     expect(fetchMock).toHaveBeenCalledWith('/api/vehicles/vehicle-1/purchase', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer signed-token',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ quantity: 2 }),
+    });
+  });
+
+  it('creates a vehicle and returns it', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse(vehicle));
+    const input = {
+      make: 'Tata',
+      model: 'Nexon',
+      category: 'SUV',
+      price: 1499000,
+      quantity: 3,
+    };
+
+    await expect(createVehicle(input, 'signed-token')).resolves.toEqual(
+      vehicle,
+    );
+    expect(fetchMock).toHaveBeenCalledWith('/api/vehicles', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer signed-token',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    });
+  });
+
+  it('partially updates a vehicle and returns it', async () => {
+    const updatedVehicle = { ...vehicle, price: 1599000 };
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse(updatedVehicle));
+
+    await expect(
+      updateVehicle('vehicle-1', { price: 1599000 }, 'signed-token'),
+    ).resolves.toEqual(updatedVehicle);
+    expect(fetchMock).toHaveBeenCalledWith('/api/vehicles/vehicle-1', {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer signed-token',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ price: 1599000 }),
+    });
+  });
+
+  it('deletes a vehicle', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(
+      removeVehicle('vehicle-1', 'signed-token'),
+    ).resolves.toBeUndefined();
+    expect(fetchMock).toHaveBeenCalledWith('/api/vehicles/vehicle-1', {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer signed-token',
+      },
+    });
+  });
+
+  it('restocks a vehicle and returns updated stock', async () => {
+    const updatedVehicle = { ...vehicle, quantity: 5 };
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse(updatedVehicle));
+
+    await expect(
+      restockVehicle('vehicle-1', 2, 'signed-token'),
+    ).resolves.toEqual(updatedVehicle);
+    expect(fetchMock).toHaveBeenCalledWith('/api/vehicles/vehicle-1/restock', {
       method: 'POST',
       headers: {
         Accept: 'application/json',

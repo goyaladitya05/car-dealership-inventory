@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { Brand } from '../components/Brand';
 import { VehicleCard } from '../components/VehicleCard';
 import { VehicleFilters } from '../components/VehicleFilters';
+import { VehicleFormModal } from '../components/VehicleFormModal';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import {
@@ -73,6 +74,7 @@ export function DashboardPage() {
   const [filters, setFilters] = useState<Filters>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>();
+  const [formVehicle, setFormVehicle] = useState<Vehicle | 'new'>();
   const requestId = useRef(0);
 
   const loadInventory = useCallback(
@@ -151,6 +153,31 @@ export function DashboardPage() {
     );
   }
 
+  function handleSaved(savedVehicle: Vehicle) {
+    setVehicles((currentVehicles) => {
+      const exists = currentVehicles.some(
+        (vehicle) => vehicle.id === savedVehicle.id,
+      );
+
+      return exists
+        ? currentVehicles.map((vehicle) =>
+            vehicle.id === savedVehicle.id ? savedVehicle : vehicle,
+          )
+        : [savedVehicle, ...currentVehicles];
+    });
+    setCategories((currentCategories) =>
+      [...new Set([...currentCategories, savedVehicle.category])].sort(
+        (left, right) => left.localeCompare(right),
+      ),
+    );
+  }
+
+  function handleDeleted(id: string) {
+    setVehicles((currentVehicles) =>
+      currentVehicles.filter((vehicle) => vehicle.id !== id),
+    );
+  }
+
   if (!token) {
     return null;
   }
@@ -158,7 +185,10 @@ export function DashboardPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-canvas px-4 pb-16 sm:px-6">
       <div className="dashboard-glow" aria-hidden="true" />
-      <nav className="relative z-10 mx-auto flex min-h-20 max-w-7xl flex-wrap items-center justify-between gap-3 py-4">
+      <nav
+        aria-hidden={Boolean(formVehicle)}
+        className="relative z-10 mx-auto flex min-h-20 max-w-7xl flex-wrap items-center justify-between gap-3 py-4"
+      >
         <Brand />
         <div className="flex items-center gap-3">
           <div className="hidden text-right sm:block">
@@ -180,7 +210,10 @@ export function DashboardPage() {
         </div>
       </nav>
 
-      <div className="relative z-10 mx-auto max-w-7xl pt-12 sm:pt-20">
+      <div
+        aria-hidden={Boolean(formVehicle)}
+        className="relative z-10 mx-auto max-w-7xl pt-12 sm:pt-20"
+      >
         <header>
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-indigo-700">
             Inventory workspace
@@ -195,10 +228,17 @@ export function DashboardPage() {
                 purchase from one focused workspace.
               </p>
             </div>
-            <p className="text-sm text-muted">
-              {vehicles.length} {vehicles.length === 1 ? 'model' : 'models'}
-              {' shown'}
-            </p>
+            <div className="flex flex-wrap items-center gap-3 md:justify-end">
+              {user?.role === 'admin' && !formVehicle ? (
+                <Button onClick={() => setFormVehicle('new')}>
+                  Add vehicle
+                </Button>
+              ) : null}
+              <p className="text-sm text-muted">
+                {vehicles.length} {vehicles.length === 1 ? 'model' : 'models'}
+                {' shown'}
+              </p>
+            </div>
           </div>
         </header>
 
@@ -277,6 +317,10 @@ export function DashboardPage() {
                     vehicle={vehicle}
                     token={token}
                     onPurchased={handlePurchased}
+                    isAdmin={user?.role === 'admin'}
+                    onEdit={setFormVehicle}
+                    onDeleted={handleDeleted}
+                    onRestocked={handlePurchased}
                   />
                 ))}
               </div>
@@ -284,6 +328,14 @@ export function DashboardPage() {
           </div>
         </section>
       </div>
+      {user?.role === 'admin' && formVehicle ? (
+        <VehicleFormModal
+          token={token}
+          {...(formVehicle === 'new' ? {} : { vehicle: formVehicle })}
+          onSaved={handleSaved}
+          onClose={() => setFormVehicle(undefined)}
+        />
+      ) : null}
     </main>
   );
 }
