@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -13,6 +13,7 @@ const vehicle: Vehicle = {
   category: 'SUV',
   price: 32999.5,
   quantity: 3,
+  imageUrl: 'https://images.example.com/tata-nexon.jpg',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -32,6 +33,45 @@ function VehicleCardHarness({ initialVehicle = vehicle }) {
 describe('VehicleCard', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('shows the vehicle photo with meaningful alternative text', () => {
+    render(<VehicleCardHarness />);
+
+    expect(screen.getByRole('img', { name: 'Tata Nexon' })).toHaveAttribute(
+      'src',
+      vehicle.imageUrl,
+    );
+    expect(screen.getByRole('img', { name: 'Tata Nexon' })).toHaveAttribute(
+      'loading',
+      'lazy',
+    );
+  });
+
+  it('shows a placeholder when the vehicle has no photo', () => {
+    render(
+      <VehicleCardHarness initialVehicle={{ ...vehicle, imageUrl: null }} />,
+    );
+
+    expect(
+      screen.getByLabelText('No photo available for Tata Nexon'),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('img', { name: 'Tata Nexon' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('replaces a photo that fails to load with the placeholder', () => {
+    render(<VehicleCardHarness />);
+
+    fireEvent.error(screen.getByRole('img', { name: 'Tata Nexon' }));
+
+    expect(
+      screen.getByLabelText('No photo available for Tata Nexon'),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('img', { name: 'Tata Nexon' }),
+    ).not.toBeInTheDocument();
   });
 
   it('formats vehicle details and disables purchase when sold out', () => {

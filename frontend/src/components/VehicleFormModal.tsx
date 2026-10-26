@@ -23,6 +23,7 @@ interface FormValues {
   category: string;
   price: string;
   quantity: string;
+  imageUrl: string;
 }
 
 type FormErrors = Partial<Record<keyof FormValues, string>>;
@@ -34,6 +35,7 @@ function initialValues(vehicle?: Vehicle): FormValues {
     category: vehicle?.category ?? '',
     price: vehicle ? String(vehicle.price) : '',
     quantity: vehicle ? String(vehicle.quantity) : '',
+    imageUrl: vehicle?.imageUrl ?? '',
   };
 }
 
@@ -61,6 +63,19 @@ function validate(values: FormValues): FormErrors {
     errors.quantity = 'Quantity must be a whole number of 0 or more';
   }
 
+  const imageUrl = values.imageUrl.trim();
+  if (imageUrl.length > 2048) {
+    errors.imageUrl = 'Image URL must be 2048 characters or less';
+  } else if (imageUrl) {
+    try {
+      if (new URL(imageUrl).protocol !== 'https:') {
+        errors.imageUrl = 'Image URL must use HTTPS';
+      }
+    } catch {
+      errors.imageUrl = 'Image URL must be a valid HTTPS URL';
+    }
+  }
+
   return errors;
 }
 
@@ -71,6 +86,7 @@ function toInput(values: FormValues): VehicleInput {
     category: values.category.trim(),
     price: Number(values.price),
     quantity: Number(values.quantity),
+    imageUrl: values.imageUrl.trim() || null,
   };
 }
 
@@ -85,6 +101,9 @@ function changedFields(input: VehicleInput, vehicle: Vehicle): VehicleUpdate {
     ...(input.quantity === vehicle.quantity
       ? {}
       : { quantity: input.quantity }),
+    ...(input.imageUrl === vehicle.imageUrl
+      ? {}
+      : { imageUrl: input.imageUrl }),
   };
 }
 
@@ -98,6 +117,7 @@ export function VehicleFormModal({
   const [errors, setErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState<string>();
   const [isSaving, setIsSaving] = useState(false);
+  const [previewFailed, setPreviewFailed] = useState(false);
   const isEditing = Boolean(vehicle);
 
   useEffect(() => {
@@ -114,6 +134,17 @@ export function VehicleFormModal({
   function setField(field: keyof FormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
+    if (field === 'imageUrl') {
+      setPreviewFailed(false);
+    }
+  }
+
+  let previewUrl: string | undefined;
+  try {
+    const url = new URL(values.imageUrl.trim());
+    previewUrl = url.protocol === 'https:' ? url.toString() : undefined;
+  } catch {
+    previewUrl = undefined;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -228,6 +259,37 @@ export function VehicleFormModal({
               value={values.quantity}
               onChange={(event) => setField('quantity', event.target.value)}
             />
+          </div>
+          <div className="grid items-end gap-4 sm:grid-cols-[1fr_8rem]">
+            <div>
+              <Input
+                label="Image URL"
+                error={errors.imageUrl}
+                type="url"
+                inputMode="url"
+                placeholder="https://example.com/vehicle.jpg"
+                maxLength={2049}
+                value={values.imageUrl}
+                onChange={(event) => setField('imageUrl', event.target.value)}
+              />
+              <p className="mt-2 text-xs text-muted">
+                Optional. Use a secure, publicly accessible image.
+              </p>
+            </div>
+            <div className="aspect-[16/10] overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-periwinkle/45 via-white to-orange-100">
+              {previewUrl && !previewFailed ? (
+                <img
+                  src={previewUrl}
+                  alt={`Image preview for ${values.make.trim() || 'vehicle'} ${values.model.trim()}`.trim()}
+                  className="size-full object-cover"
+                  onError={() => setPreviewFailed(true)}
+                />
+              ) : (
+                <div className="flex size-full items-center justify-center px-3 text-center text-[0.65rem] font-medium uppercase tracking-[0.12em] text-muted">
+                  {previewFailed ? 'Preview unavailable' : 'Image preview'}
+                </div>
+              )}
+            </div>
           </div>
 
           {serverError ? (

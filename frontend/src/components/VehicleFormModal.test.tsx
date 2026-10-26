@@ -12,6 +12,7 @@ const vehicle: Vehicle = {
   category: 'Sedan',
   price: 32000,
   quantity: 3,
+  imageUrl: 'https://images.example.com/toyota-camry.jpg',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -70,6 +71,64 @@ describe('VehicleFormModal', () => {
     ).toBeVisible();
   });
 
+  it('requires an HTTPS image URL', async () => {
+    render(
+      <VehicleFormModal
+        token="signed-token"
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    await fillValidForm();
+    await userEvent.type(
+      screen.getByLabelText('Image URL'),
+      'http://images.example.com/camry.jpg',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Add vehicle' }));
+
+    expect(screen.getByText('Image URL must use HTTPS')).toBeVisible();
+  });
+
+  it('previews and submits an image URL', async () => {
+    const onSaved = vi.fn();
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse(vehicle, 201));
+    render(
+      <VehicleFormModal
+        token="signed-token"
+        onClose={vi.fn()}
+        onSaved={onSaved}
+      />,
+    );
+
+    await fillValidForm();
+    await userEvent.type(screen.getByLabelText('Image URL'), vehicle.imageUrl!);
+
+    expect(
+      screen.getByRole('img', { name: 'Image preview for Toyota Camry' }),
+    ).toHaveAttribute('src', vehicle.imageUrl);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add vehicle' }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/vehicles',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          make: 'Toyota',
+          model: 'Camry',
+          category: 'Sedan',
+          price: 32000,
+          quantity: 3,
+          imageUrl: vehicle.imageUrl,
+        }),
+      }),
+    );
+    expect(onSaved).toHaveBeenCalledWith(vehicle);
+  });
+
   it('creates a vehicle and reports it without reloading', async () => {
     const onSaved = vi.fn();
     const fetchMock = vi
@@ -96,6 +155,7 @@ describe('VehicleFormModal', () => {
           category: 'Sedan',
           price: 32000,
           quantity: 3,
+          imageUrl: null,
         }),
       }),
     );
@@ -126,6 +186,32 @@ describe('VehicleFormModal', () => {
       expect.objectContaining({
         method: 'PUT',
         body: JSON.stringify({ model: 'Corolla' }),
+      }),
+    );
+  });
+
+  it('submits null when clearing an existing image URL', async () => {
+    const updatedVehicle = { ...vehicle, imageUrl: null };
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(jsonResponse(updatedVehicle));
+    render(
+      <VehicleFormModal
+        token="signed-token"
+        vehicle={vehicle}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    await userEvent.clear(screen.getByLabelText('Image URL'));
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/vehicles/vehicle-1',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ imageUrl: null }),
       }),
     );
   });
