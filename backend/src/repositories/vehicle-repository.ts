@@ -12,6 +12,7 @@ export interface Vehicle {
   category: string;
   price: number;
   quantity: number;
+  imageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +23,7 @@ export interface CreateVehicleInput {
   category: string;
   price: number;
   quantity: number;
+  imageUrl?: string | undefined;
 }
 
 export interface VehicleSearch {
@@ -38,6 +40,7 @@ export interface UpdateVehicleInput {
   category?: string | undefined;
   price?: number | undefined;
   quantity?: number | undefined;
+  imageUrl?: string | null | undefined;
 }
 
 function escapeLike(value: string) {

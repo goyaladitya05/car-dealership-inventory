@@ -3,15 +3,19 @@ import { z } from 'zod';
 
 import type { VehicleService } from '../services/vehicle-service.js';
 
+const imageUrlSchema = z.url({ protocol: /^https$/ }).max(2048);
+
 const createVehicleSchema = z.object({
   make: z.string().trim().min(1).max(100),
   model: z.string().trim().min(1).max(100),
   category: z.string().trim().min(1).max(100),
   price: z.number().positive(),
   quantity: z.number().int().nonnegative().default(0),
+  imageUrl: imageUrlSchema.optional(),
 });
 const updateVehicleSchema = createVehicleSchema.partial().extend({
   quantity: z.number().int().nonnegative().optional(),
+  imageUrl: imageUrlSchema.nullable().optional(),
 });
 const purchaseVehicleSchema = z.object({
   quantity: z.number().int().positive().default(1),
