@@ -1,10 +1,12 @@
+import 'dotenv/config';
+
 import cors from 'cors';
 import express from 'express';
 
-import type { AppConfig } from './config.js';
+import { type AppConfig, loadConfig } from './config.js';
 import { AuthController } from './controllers/auth-controller.js';
 import { VehicleController } from './controllers/vehicle-controller.js';
-import type { Database } from './db/index.js';
+import { createDb, type Database } from './db/index.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { notFound } from './middleware/not-found.js';
 import { UserRepository } from './repositories/user-repository.js';
@@ -45,3 +47,31 @@ export function createApp(dependencies: AppDependencies) {
 
   return app;
 }
+
+async function initializeApp() {
+  const config = loadConfig();
+  const connection = await createDb(
+    config.databaseUrl ? { databaseUrl: config.databaseUrl } : {},
+  );
+
+  return createApp({ db: connection.db, config });
+}
+
+let appPromise: ReturnType<typeof initializeApp> | undefined;
+const app = express();
+
+app.use(async (request, response, next) => {
+  const pendingApp = (appPromise ??= initializeApp());
+
+  try {
+    const initializedApp = await pendingApp;
+    initializedApp(request, response, next);
+  } catch (error) {
+    if (appPromise === pendingApp) {
+      appPromise = undefined;
+    }
+    next(error);
+  }
+});
+
+export default app;
